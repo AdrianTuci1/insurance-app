@@ -7,6 +7,8 @@ const Job = require('../models/job.model');
 const ApiError = require('../utils/ApiError');
 const IdGenerator = require('../utils/idGenerator');
 const Logger = require('../utils/logger');
+const { aggregatePolicyData } = require('../utils/policyUtils');
+const { deduplicateOffers } = require('../utils/deduplicateData');
 
 class PolicyService {
     constructor() {
@@ -165,78 +167,7 @@ class PolicyService {
 
             this.sendSSEEvent(jobId, { status: 'in progress', stage: 'aggregating', message: 'Aggregating results...' });
 
-            const aggregatedData = {
-                clientData: validDocs[0].data.clientData || {},
-                offersWithoutFranchise: [],
-                offersWithFranchise: [],
-                // Default to empty/null so template uses its internal defaults
-                risks: null,
-                notes: null
-            };
-
-            const { deduplicateOffers } = require('../utils/deduplicateData');
-
-            validDocs.forEach(doc => {
-                const result = doc.data;
-                if (result.offersWithoutFranchise) aggregatedData.offersWithoutFranchise.push(...result.offersWithoutFranchise);
-                if (result.offersWithFranchise) aggregatedData.offersWithFranchise.push(...result.offersWithFranchise);
-            });
-
-            // Deduplicate aggregated offers
-            aggregatedData.offersWithoutFranchise = deduplicateOffers(aggregatedData.offersWithoutFranchise);
-            aggregatedData.offersWithFranchise = deduplicateOffers(aggregatedData.offersWithFranchise);
-
-            // Post-processing: Calculate Installments (Rate 4 = Rate 1 + 10%) and format numbers
-            const formatNumber = (val) => {
-                if (!val) return '0';
-                // Remove non-numeric except dots/commas to get a clean number
-                let clean = val.toString().replace(/[^\d.,]/g, '');
-
-                // Convert to number (handling European format)
-                if (clean.includes('.') && clean.includes(',')) {
-                    if (clean.lastIndexOf(',') > clean.lastIndexOf('.')) {
-                        clean = clean.replace(/\./g, '').replace(',', '.');
-                    } else {
-                        clean = clean.replace(/,/g, '');
-                    }
-                } else if (clean.includes(',')) {
-                    clean = clean.replace(',', '.');
-                }
-
-                const num = Math.round(parseFloat(clean) || 0);
-                // Format with dot thousands separator
-                return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-            };
-
-            const processOffers = (offers) => {
-                return offers.map(offer => {
-                    // Format existing numeric fields
-                    offer.rate1 = formatNumber(offer.rate1);
-                    offer.sum = formatNumber(offer.sum);
-                    offer.franchisePartial = formatNumber(offer.franchisePartial);
-
-                    // Calculate Rate 4
-                    const rate1Num = parseInt(offer.rate1.replace(/\./g, '')) || 0;
-                    if (rate1Num > 0) {
-                        const rate4 = Math.round(rate1Num * 1.10);
-                        offer.rate4 = rate4.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-                    } else {
-                        offer.rate4 = offer.rate1;
-                    }
-
-                    // Clean franchiseTotal (strip non-numeric but don't add thousand separator as it's small)
-                    if (offer.franchiseTotal) {
-                        offer.franchiseTotal = offer.franchiseTotal.toString().replace(/[^\d]/g, '') || '0';
-                    } else {
-                        offer.franchiseTotal = '0';
-                    }
-
-                    return offer;
-                });
-            };
-
-            aggregatedData.offersWithoutFranchise = processOffers(aggregatedData.offersWithoutFranchise);
-            aggregatedData.offersWithFranchise = processOffers(aggregatedData.offersWithFranchise);
+            const aggregatedData = aggregatePolicyData(validDocs, deduplicateOffers);
 
             await Job.updateStatus(jobId, 'complete', {
                 extractedData: aggregatedData,
@@ -315,6 +246,17 @@ class PolicyService {
         }
 
 
+        const safeData = {
+            clientData: {},
+            offersWithoutFranchise: [],
+            offersWithFranchise: [],
+            risks: '',
+            notes: '',
+            ...extractedData
+        };
+
+        const html = await templateService.renderTemplate(job.policyType, safeData);
+
         await Job.updateStatus(jobId, 'complete', {
             extractedData,
             updatedAt: new Date().toISOString()
@@ -342,6 +284,29 @@ class PolicyService {
             amount: job.extractedData?.offersWithFranchise?.[0]?.rate1 || '0 €',
             object: job.extractedData?.clientData?.object || 'N/A'
         }));
+    }
+
+    async deleteJob(jobId) {
+        const job = await Job.findById(jobId);
+        if (!job) {
+            throw new ApiError(404, 'Job not found');
+        }
+
+        // Delete associated files from S3
+        if (job.documents && job.documents.length > 0) {
+            await Promise.all(job.documents.map(doc => {
+                if (doc.key) {
+                    return s3Service.deleteFile(doc.key);
+                }
+                return Promise.resolve();
+            }));
+        }
+
+        // Delete job record from DB
+        await Job.delete(jobId);
+
+        Logger.info(`[Job ${jobId}] Deleted successfully.`);
+        return { message: 'Job deleted successfully' };
     }
 }
 

@@ -1,15 +1,24 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import './PolicyPreview.css';
+import { observer } from 'mobx-react-lite';
+import { Save, X } from 'lucide-react';
 import { apiService } from '../../services/api.service';
-import { API_CONFIG } from '../../config/api.config';
 
-const PolicyPreview = ({ clientData }) => {
+const PolicyPreview = observer(({ clientData, onClose }) => {
     const today = new Date().toLocaleDateString('ro-RO');
 
 
     const [htmlContent, setHtmlContent] = React.useState(clientData?.html || null);
     const [extractedData, setExtractedData] = React.useState(clientData?.extractedData || null);
     const [jobId, setJobId] = React.useState(clientData?.jobId || clientData?.id || null);
+
+    const [loading, setLoading] = React.useState(false);
+    const [saving, setSaving] = React.useState(false);
+    const [progress, setProgress] = React.useState(''); // To show status
+    const [error, setError] = React.useState(null);
+
+    const previewRef = React.useRef(null);
 
     // Derived state or effect to update when props change
     React.useEffect(() => {
@@ -20,15 +29,7 @@ const PolicyPreview = ({ clientData }) => {
         }
     }, [clientData]);
 
-    const [loading, setLoading] = React.useState(false);
-    const [saving, setSaving] = React.useState(false);
-    const [progress, setProgress] = React.useState(''); // To show status
-    const [error, setError] = React.useState(null);
-
-    const previewRef = React.useRef(null);
-
     // Removed internal auth token logic as this component is now purely presentation/edit
-
     // Removed connectToSSE and handleFileUpload as they are handled by parent/AddOfferModal
 
     const handleSave = async () => {
@@ -58,7 +59,13 @@ const PolicyPreview = ({ clientData }) => {
 
             // Check if array index
             const lastKey = parts[parts.length - 1];
-            current[lastKey] = value;
+            const idx = parseInt(lastKey, 10);
+            if (idx !== -1 && !isNaN(idx)) {
+                if (!current[lastKey]) current[lastKey] = []; // Ensure array exists if null
+                current[lastKey][idx] = value;
+            } else {
+                current[lastKey] = value;
+            }
         });
 
         try {
@@ -66,7 +73,7 @@ const PolicyPreview = ({ clientData }) => {
 
             setHtmlContent(result.html);
             setExtractedData(result.extractedData);
-            alert("Modificările au fost salvate cu succes!");
+            if (onClose) onClose();
         } catch (err) {
             console.error(err);
             setError(err.message);
@@ -74,6 +81,34 @@ const PolicyPreview = ({ clientData }) => {
             setSaving(false);
         }
     };
+
+    // Portal Target
+    const portalTarget = document.getElementById('header-actions-portal');
+
+    const headerActions = (
+        <>
+            <button
+                className="btn-header btn-header-ghost icon-only"
+                onClick={() => onClose && onClose()}
+                disabled={saving}
+                title="Închide previzualizarea"
+            >
+                <X size={20} />
+            </button>
+            <button
+                className="btn-header btn-header-primary icon-only"
+                onClick={handleSave}
+                disabled={saving}
+                title={saving ? 'Se salvează...' : 'Salvează Modificările'}
+            >
+                {saving ? (
+                    <span className="animate-spin">⏳</span>
+                ) : (
+                    <Save size={20} />
+                )}
+            </button>
+        </>
+    );
 
     return (
         <div className="policy-preview-container">
@@ -86,16 +121,6 @@ const PolicyPreview = ({ clientData }) => {
 
                 {htmlContent && (
                     <>
-                        <div className="preview-actions">
-                            <button
-                                className="save-btn"
-                                onClick={handleSave}
-                                disabled={saving}
-                            >
-                                {saving ? 'Se salvează...' : 'Salvează Modificările'}
-                            </button>
-                            <p className="edit-hint">💡 Poți modifica textul direct pe ofertă înainte de a salva.</p>
-                        </div>
                         <div
                             className="generated-policy-content"
                             ref={previewRef}
@@ -104,8 +129,10 @@ const PolicyPreview = ({ clientData }) => {
                     </>
                 )}
             </div>
+            {/* Portal Action Buttons */}
+            {portalTarget && createPortal(headerActions, portalTarget)}
         </div>
     );
-};
+});
 
 export default PolicyPreview;

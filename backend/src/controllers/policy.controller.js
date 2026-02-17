@@ -47,6 +47,12 @@ class PolicyController {
         const summary = await policyService.getUserPolicies();
         res.json(summary);
     });
+
+    deletePolicy = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const result = await policyService.deleteJob(id);
+        res.json(result);
+    });
 }
 
 module.exports = new PolicyController();

@@ -28,6 +28,9 @@ class PolicyRoute extends BaseRoute {
 
         // Get policy HTML
         this.router.get('/:id/html', auth, policyController.getPolicyHtml);
+
+        // Delete policy
+        this.router.delete('/:id', auth, policyController.deletePolicy);
     }
 }
 

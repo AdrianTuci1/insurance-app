@@ -11,11 +11,13 @@ import ClientForm from '../components/Clients/ClientForm';
 import PolicySection from '../components/Clients/PolicySection';
 import './ClientDetail.css';
 
+import { API_CONFIG } from '../config/api.config';
+
 const ClientDetail = observer(() => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+    const [isPolicyPreviewOpen, setIsPolicyPreviewOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -25,16 +27,57 @@ const ClientDetail = observer(() => {
     const [formData, setFormData] = useState(null);
 
     useEffect(() => {
-        let pollInterval;
+        let eventSource;
 
-        const fetchDetails = async () => {
+        const connectSSE = () => {
+            if (!id) return;
+
+            const url = `${API_CONFIG.BASE_URL}/policies/events/${id}`;
+            console.log('Connecting to SSE:', url);
+
+            eventSource = new EventSource(url);
+
+            eventSource.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+
+                    if (data.status === 'complete' || data.status === 'Complete') {
+                        // Reload data smoothly via store to get processed/normalized version
+                        // Even if data.extractedData is not in the event, we fetch it fresh from API
+                        clientStore.getClient(id).then(client => {
+                            setFormData(prev => ({
+                                ...client,
+                                // Preserve selection state if possible, or reset to best guess from fresh data
+                                selectedFranchise: client.selectedFranchise ?? prev?.selectedFranchise ?? false,
+                                selectedOfferIndex: client.selectedOfferIndex ?? prev?.selectedOfferIndex ?? -1,
+                                selectedRate: client.selectedRate ?? prev?.selectedRate ?? 'rate1',
+                                amount: (client.amount && client.amount !== 'Pending...') ? client.amount : (prev?.amount || 'Not set')
+                            }));
+                            setLoading(false);
+                        });
+                    } else if (data.status === 'failed') {
+                        setError(data.error || 'Processing failed');
+                        setLoading(false);
+                    } else {
+                        // Update status/progress for "in progress"
+                        setFormData(prev => prev ? ({ ...prev, status: data.status }) : null);
+                    }
+                } catch (e) {
+                    console.error('SSE Error parsing:', e);
+                }
+            };
+
+            eventSource.onerror = (err) => {
+                console.error('SSE Error:', err);
+                eventSource.close();
+                // Optional: Retry logic could go here
+            };
+        };
+
+        const fetchInitialData = async () => {
             try {
-                // If we are already loading effectively (first load), set loading
-                if (!formData) setLoading(true); // Only show full loader on first load
-
+                if (!formData) setLoading(true);
                 const data = await clientStore.getClient(id);
-
-                // Initialize default selection state
                 setFormData({
                     ...data,
                     selectedFranchise: data.selectedFranchise ?? false,
@@ -43,36 +86,28 @@ const ClientDetail = observer(() => {
                     amount: (data.amount === 'Pending...' || !data.amount) ? 'Not set' : data.amount
                 });
 
-                // Check status for polling
-                // Note: ApiStrategy maps 'in progress' to 'In Progress'
-                if (data.status === 'In Progress' || data.status === 'not started') {
-                    if (!pollInterval) {
-                        pollInterval = setInterval(fetchDetails, 3000); // Poll every 3s
-                    }
-                } else {
-                    if (pollInterval) {
-                        clearInterval(pollInterval);
-                        pollInterval = null;
-                    }
+                // If job is processing, connect to SSE
+                if (data.status === 'In Progress' || data.status === 'not started' || data.status === 'initializing') {
+                    connectSSE();
                 }
-
             } catch (err) {
                 console.error(err);
                 setError('Failed to load job details');
-                if (pollInterval) clearInterval(pollInterval);
             } finally {
                 setLoading(false);
             }
         };
 
         if (id) {
-            fetchDetails();
+            fetchInitialData();
         }
 
         return () => {
-            if (pollInterval) clearInterval(pollInterval);
+            if (eventSource) {
+                eventSource.close();
+            }
         };
-    }, [id]); // Check dependency: if formData changes, we don't want to re-run effect, so keep it just [id]
+    }, [id]);
     // But we need to reference pollInterval.
     // Actually, `fetchDetails` closure usually captures stale state, but here we call clientStore.getClient(id) so it fetches fresh data.
     // The logic `if (data.status ...)` uses the fresh `data`.
@@ -168,7 +203,28 @@ const ClientDetail = observer(() => {
 
         const updatedData = { ...formData, [name]: newValue };
         setFormData(updatedData);
-        clientStore.updateClient(formData.id, updatedData);
+
+        // Construct the payload structure expected by the backend
+        // IMPORTANT: We must NOT overwrite the entire extractedData with partial information
+        // We should merge our changes into the original extractedData structure
+        const currentExtractedData = formData.originalData?.extractedData || {};
+
+        const payload = {
+            extractedData: {
+                ...currentExtractedData,
+                clientData: {
+                    ...(currentExtractedData.clientData || {}),
+                    name: name === 'name' ? newValue : updatedData.name,
+                    phone: name === 'phone' ? newValue : updatedData.phone,
+                    vin: name === 'vin' ? newValue : updatedData.vin,
+                    object: name === 'object' ? newValue : updatedData.object,
+                }
+            },
+            policyType: name === 'type' ? newValue : updatedData.type,
+            amount: name === 'amount' ? newValue : updatedData.amount
+        };
+
+        clientStore.updateClient(id, payload);
     };
 
     const handleDelete = async () => {
@@ -200,22 +256,16 @@ const ClientDetail = observer(() => {
         return <div className="error-state">{error || 'Job not found'}</div>;
     }
 
-    // Show processing state if status is 'In Progress' or 'not started'
-    // Note: The helper might convert 'not started' to something else, checking raw props if available or just the string
-    const isProcessing = formData.status === 'In Progress' || formData.status === 'not started' || formData.status === 'initializing';
+    // Simplified processing indicator instead of full page overlay
+    const isProcessing = formData.status === 'In Progress' || formData.status === 'not started' || formData.status === 'initializing' || formData.status === 'processing';
 
-    if (isProcessing) {
+    if (isPolicyPreviewOpen) {
         return (
-            <div className="client-detail-full-layout loading-centered">
-                <Loader2 className="animate-spin" size={64} color="var(--primary-color)" />
-                <h2 style={{ marginTop: '1.5rem', fontSize: '1.5rem', fontWeight: 600 }}>Processing Document...</h2>
-                <p className="loading-text" style={{ maxWidth: '400px', textAlign: 'center', lineHeight: '1.6' }}>
-                    We are extracting data from your uploaded files. <br />
-                    This usually takes 10-20 seconds.
-                </p>
-                <div style={{ marginTop: '1rem', padding: '0.5rem 1rem', background: '#f5f5f5', borderRadius: '8px', fontSize: '0.9rem', color: '#666' }}>
-                    Status: {formData.status}
-                </div>
+            <div className="client-detail-full-layout animate-fade-in" style={{ display: 'block' }}>
+                <PolicyPreview
+                    clientData={formData}
+                    onClose={() => setIsPolicyPreviewOpen(false)}
+                />
             </div>
         );
     }
@@ -232,6 +282,7 @@ const ClientDetail = observer(() => {
                     onRateSelect={handleRateSelect}
                     onDeleteClick={() => setIsDeleteModalOpen(true)}
                     insuranceTypes={insuranceTypes}
+                    isProcessing={isProcessing}
                 />
             </div>
 
@@ -242,7 +293,7 @@ const ClientDetail = observer(() => {
                 <PolicySection
                     formData={formData}
                     onManageDocuments={() => setIsUploadModalOpen(true)}
-                    onPreview={() => setIsPreviewModalOpen(true)}
+                    onPreview={() => setIsPolicyPreviewOpen(true)}
                 />
 
                 {/* Horizontal Separator */}
@@ -269,14 +320,6 @@ const ClientDetail = observer(() => {
                 </div>
             </Modal>
 
-            <Modal
-                isOpen={isPreviewModalOpen}
-                onClose={() => setIsPreviewModalOpen(false)}
-                title="Policy Offer Preview"
-                isFullScreen={true}
-            >
-                <PolicyPreview clientData={formData} />
-            </Modal>
 
             {/* Delete Confirmation Modal */}
             <Modal

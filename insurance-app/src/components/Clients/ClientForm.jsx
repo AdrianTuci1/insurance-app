@@ -8,7 +8,8 @@ const ClientForm = ({
     onOfferSelect,
     onRateSelect,
     onDeleteClick,
-    insuranceTypes
+    insuranceTypes,
+    isProcessing
 }) => {
     if (!formData) return null;
 
@@ -80,8 +81,13 @@ const ClientForm = ({
                     </select>
                 </div>
 
-                {/* ADVANCED OFFER SELECTION */}
-                {formData.groupedOffers && (formData.groupedOffers.withoutFranchise.length > 0 || formData.groupedOffers.withFranchise.length > 0) ? (
+                {/* ADVANCED OFFER SELECTION OR PROCESSING STATE */}
+                {isProcessing ? (
+                    <div className="processing-offers-loader">
+                        <div className="loader-mini"></div>
+                        <p>Document processing in progress... extracting offers</p>
+                    </div>
+                ) : formData.groupedOffers && (formData.groupedOffers.withoutFranchise.length > 0 || formData.groupedOffers.withFranchise.length > 0) ? (
                     <div className="advanced-offer-selection">
                         <label className="detail-label">Select Offer & Installments</label>
 

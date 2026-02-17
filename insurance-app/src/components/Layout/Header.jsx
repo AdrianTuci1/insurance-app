@@ -93,6 +93,9 @@ const Header = observer(() => {
                                 <h1 className="header-page-title">
                                     {clientHeaderInfo || 'Job Details'}
                                 </h1>
+
+                                {/* Portal for dynamic actions (like PolicyPreview Save/Close) */}
+                                <div id="header-actions-portal" className="header-custom-actions"></div>
                             </div>
                         )}
                     </div>
