@@ -1,15 +1,16 @@
-
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../services/db.service');
+const asyncHandler = require('../utils/asyncHandler');
+const ApiError = require('../utils/ApiError');
 
-exports.register = async (req, res) => {
-    try {
+class AuthController {
+    register = asyncHandler(async (req, res) => {
         const { email, password, role, name } = req.body;
-        if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
+        if (!email || !password) throw new ApiError(400, 'Email and password are required');
 
         const existingUser = await db.getUserByEmail(email);
-        if (existingUser) return res.status(400).json({ error: 'User already exists' });
+        if (existingUser) throw new ApiError(400, 'User already exists');
 
         const hashedPassword = await bcrypt.hash(password, 10);
         await db.createUser({
@@ -21,19 +22,45 @@ exports.register = async (req, res) => {
         });
 
         res.status(201).json({ message: 'User registered successfully' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
+    });
 
-exports.login = async (req, res) => {
-    try {
+    signup = asyncHandler(async (req, res) => {
+        const { email, password, name, secretKey } = req.body;
+
+        if (!email || !password || !secretKey) {
+            throw new ApiError(400, 'Email, password and secret key are required');
+        }
+
+        const serverSecret = process.env.ADMIN_SIGNUP_SECRET;
+        if (!serverSecret) {
+            throw new ApiError(500, 'Server registration is currently disabled (Secret not configured)');
+        }
+
+        if (secretKey !== serverSecret) {
+            throw new ApiError(401, 'Invalid secret key');
+        }
+
+        const existingUser = await db.getUserByEmail(email);
+        if (existingUser) throw new ApiError(400, 'User already exists');
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await db.createUser({
+            email,
+            password: hashedPassword,
+            role: 'admin',
+            name: name || email.split('@')[0],
+            createdAt: new Date().toISOString()
+        });
+
+        res.status(201).json({ message: 'Admin account created successfully' });
+    });
+
+    login = asyncHandler(async (req, res) => {
         const { email, password } = req.body;
         const user = await db.getUserByEmail(email);
 
         if (!user || !(await bcrypt.compare(password, user.password))) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+            throw new ApiError(401, 'Invalid credentials');
         }
 
         const token = jwt.sign(
@@ -51,32 +78,20 @@ exports.login = async (req, res) => {
                 avatar: user.avatar
             }
         });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
+    });
 
-exports.getAllUsers = async (req, res) => {
-    try {
+    getAllUsers = asyncHandler(async (req, res) => {
         const users = await db.listUsers();
-        // Remove passwords before sending
         const sanitizedUsers = users.map(({ password, ...rest }) => rest);
         res.json(sanitizedUsers);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
+    });
 
-exports.updateUser = async (req, res) => {
-    try {
+    updateUser = asyncHandler(async (req, res) => {
         const { email } = req.params;
         const { password, ...data } = req.body;
 
-        // Protective check: regular users can only update themselves
         if (req.user.role !== 'admin' && req.user.email !== email) {
-            return res.status(403).json({ error: 'Access denied' });
+            throw new ApiError(403, 'Access denied');
         }
 
         const updateData = { ...data };
@@ -86,41 +101,25 @@ exports.updateUser = async (req, res) => {
 
         await db.updateUser(email, updateData);
         res.json({ message: 'User updated successfully' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
+    });
 
-exports.deleteUser = async (req, res) => {
-    try {
+    deleteUser = asyncHandler(async (req, res) => {
         const { email } = req.params;
-        if (req.user.email === email) return res.status(400).json({ error: 'Cannot delete yourself' });
+        if (req.user.email === email) throw new ApiError(400, 'Cannot delete yourself');
 
         await db.deleteUser(email);
         res.json({ message: 'User deleted successfully' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
+    });
 
-exports.getSettings = async (req, res) => {
-    try {
+    getSettings = asyncHandler(async (req, res) => {
         const settings = await db.getSettings();
         res.json(settings);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
+    });
 
-exports.updateSettings = async (req, res) => {
-    try {
+    updateSettings = asyncHandler(async (req, res) => {
         await db.updateSettings(req.body);
         res.json({ message: 'Settings updated successfully' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
+    });
+}
+
+module.exports = new AuthController();

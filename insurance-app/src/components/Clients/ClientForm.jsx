@@ -105,9 +105,10 @@ const ClientForm = ({
                         <div className="offer-selection-controls">
                             <select
                                 className="detail-select offer-dropdown"
-                                value={formData.selectedOfferIndex}
+                                value={formData.selectedOfferIndex ?? -1}
                                 onChange={(e) => onOfferSelect(Number(e.target.value))}
                             >
+                                <option value="-1">Not set</option>
                                 {(formData.selectedFranchise ? formData.groupedOffers.withFranchise : formData.groupedOffers.withoutFranchise).map((offer, idx) => (
                                     <option key={idx} value={idx}>
                                         {offer.company} - {offer.rate1}
@@ -119,7 +120,7 @@ const ClientForm = ({
                                 const offers = formData.selectedFranchise ? formData.groupedOffers.withFranchise : formData.groupedOffers.withoutFranchise;
                                 const selectedOffer = offers[formData.selectedOfferIndex];
 
-                                if (!selectedOffer) return null;
+                                if (!selectedOffer || formData.selectedOfferIndex === -1) return null;
 
                                 return (
                                     <div className="selected-offer-details">
@@ -176,7 +177,7 @@ const ClientForm = ({
                             value={formData.amount || ''}
                             onChange={onChange}
                             className="detail-input"
-                            placeholder="Pending..."
+                            placeholder="Not set"
                         />
                     </div>
                 )}
@@ -184,7 +185,7 @@ const ClientForm = ({
                 <div className="form-group">
                     <label className="detail-label">Current Premium</label>
                     <div className="premium-display">
-                        <span className="premium-value">{formData.amount || '0 €'}</span>
+                        <span className="premium-value">{formData.amount || 'Not set'}</span>
                         <span className={`status-pill ${formData.status?.toLowerCase().replace(' ', '-')}`}>
                             {formData.status}
                         </span>

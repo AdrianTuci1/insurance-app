@@ -8,8 +8,6 @@ const TABLE_NAME = env.DB.JOBS_TABLE;
 
 class Job {
     static async create(job) {
-        // TTL: 24 hours from now (in seconds)
-        job.ttl = Math.floor(Date.now() / 1000) + (24 * 60 * 60);
         await docClient.send(new PutCommand({
             TableName: TABLE_NAME,
             Item: job

@@ -1,24 +1,31 @@
 
-const express = require('express');
-const router = express.Router();
+const BaseRoute = require('./base.route');
 const policyController = require('../controllers/policy.controller');
 const upload = require('../middleware/upload.middleware');
 const auth = require('../middleware/auth.middleware');
 
-// Protect processing route with Auth
-router.post('/process', auth, upload.array('documents', 10), policyController.startProcessing);
+class PolicyRoute extends BaseRoute {
+    constructor() {
+        super('/api/policies');
+        this.initializeRoutes();
+    }
 
-// SSE Endpoint (No Auth for simplicity of browser EventSource, or pass token via query param if needed)
-// For now, let's keep it open or require query param token validation
-router.get('/events/:id', policyController.streamJobUpdates);
+    initializeRoutes() {
+        // Protect processing route with Auth
+        this.router.post('/process', auth, upload.array('documents', 100), policyController.startProcessing);
 
-// Fallback status
-router.get('/status/:id', policyController.getJobStatus);
+        // SSE Endpoint
+        this.router.get('/events/:id', policyController.streamJobUpdates);
 
-// List all user policies
-router.get('/', auth, policyController.getUserPolicies);
+        // Fallback status
+        this.router.get('/status/:id', policyController.getJobStatus);
 
-// Update policy data
-router.put('/:id', auth, policyController.updatePolicyData);
+        // List all user policies
+        this.router.get('/', auth, policyController.getUserPolicies);
 
-module.exports = router;
+        // Update policy data
+        this.router.put('/:id', auth, policyController.updatePolicyData);
+    }
+}
+
+module.exports = PolicyRoute;

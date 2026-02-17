@@ -6,7 +6,7 @@ aws dynamodb create-table \
     --attribute-definitions AttributeName=email,AttributeType=S \
     --key-schema AttributeName=email,KeyType=HASH \
     --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
-    --region us-east-1
+    --region eu-central-1
 
 # Create InsuranceJobs Table
 aws dynamodb create-table \
@@ -25,10 +25,6 @@ aws dynamodb create-table \
             }
         ]" \
     --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
-    --region us-east-1
+    --region eu-central-1
 
-# Enable TTL on InsuranceJobs
-aws dynamodb update-time-to-live \
-    --table-name InsuranceJobs \
-    --time-to-live-specification "Enabled=true, AttributeName=ttl" \
-    --region us-east-1
+

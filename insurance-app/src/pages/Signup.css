@@ -1,0 +1,37 @@
+.signup-card {
+    max-width: 450px !important;
+}
+
+.success-message {
+    background: #f0fdf4;
+    color: #15803d;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+    font-size: 14px;
+    text-align: center;
+    border: 1px solid #bcf0da;
+    animation: fadeIn 0.3s ease;
+}
+
+.auth-footer {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.auth-footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+.signup-card input::placeholder {
+    color: #cbd5e1;
+    font-size: 13px;
+}

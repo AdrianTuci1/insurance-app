@@ -33,8 +33,9 @@ const ClientDetail = observer(() => {
                 setFormData({
                     ...data,
                     selectedFranchise: data.selectedFranchise ?? false,
-                    selectedOfferIndex: data.selectedOfferIndex ?? 0,
-                    selectedRate: data.selectedRate ?? 'rate1'
+                    selectedOfferIndex: data.selectedOfferIndex ?? -1,
+                    selectedRate: data.selectedRate ?? 'rate1',
+                    amount: (data.amount === 'Pending...' || !data.amount) ? 'Not set' : data.amount
                 });
             } catch (err) {
                 console.error(err);
@@ -51,9 +52,21 @@ const ClientDetail = observer(() => {
 
     const handleFranchiseToggle = (hasFranchise) => {
         const offers = hasFranchise ? formData.groupedOffers.withFranchise : formData.groupedOffers.withoutFranchise;
+
+        // If we currently have "Not set" selected, keep it
+        if (formData.selectedOfferIndex === -1) {
+            const updated = {
+                ...formData,
+                selectedFranchise: hasFranchise
+            };
+            setFormData(updated);
+            clientStore.updateClient(id, updated);
+            return;
+        }
+
         const newOfferIdx = 0; // Reset to first available offer in group
         const rate = 'rate1';
-        const newAmount = offers[newOfferIdx]?.[rate] || '0 €';
+        const newAmount = offers[newOfferIdx]?.[rate] || 'Not set';
 
         const updated = {
             ...formData,
@@ -69,7 +82,11 @@ const ClientDetail = observer(() => {
     const handleOfferSelect = (idx) => {
         const offers = formData.selectedFranchise ? formData.groupedOffers.withFranchise : formData.groupedOffers.withoutFranchise;
         const rate = formData.selectedRate || 'rate1';
-        const newAmount = offers[idx]?.[rate] || '0 €';
+
+        let newAmount = 'Not set';
+        if (idx !== -1) {
+            newAmount = offers[idx]?.[rate] || 'Not set';
+        }
 
         const updated = {
             ...formData,
@@ -97,8 +114,12 @@ const ClientDetail = observer(() => {
 
         // Auto-handle Euro symbol for amount field
         if (name === 'amount') {
-            const numericValue = value.replace(/[^\d.]/g, '');
-            newValue = numericValue ? `${numericValue} €` : '';
+            if (value === 'Not set' || value === '') {
+                newValue = value;
+            } else {
+                const numericValue = value.replace(/[^\d.]/g, '');
+                newValue = numericValue ? `${numericValue} €` : '';
+            }
         }
 
         const updatedData = { ...formData, [name]: newValue };

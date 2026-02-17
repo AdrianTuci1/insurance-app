@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Lock, User } from 'lucide-react';
 import { authStore } from '../stores/AuthStore';
 import './Login.css';
@@ -69,6 +69,12 @@ const Login = () => {
                     <button type="submit" className="btn-submit">
                         Sign In
                     </button>
+
+                    <div className="auth-footer" style={{ marginTop: '20px', textAlign: 'center', fontSize: '14px' }}>
+                        <p style={{ color: 'var(--text-secondary)' }}>
+                            Don't have an account? <Link to="/signup" style={{ color: 'var(--primary-color)', fontWeight: 600, textDecoration: 'none' }}>Sign Up</Link>
+                        </p>
+                    </div>
 
                     <div className="demo-credentials">
                         <p>Demo Credentials: admin@insurance.com / admin</p>

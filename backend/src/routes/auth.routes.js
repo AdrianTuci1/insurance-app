@@ -1,26 +1,35 @@
 
-const express = require('express');
-const router = express.Router();
+const BaseRoute = require('./base.route');
 const authController = require('../controllers/auth.controller');
 const auth = require('../middleware/auth.middleware');
 
-// Admin check middleware
-const admin = (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
-        next();
-    } else {
-        res.status(403).json({ error: 'Access denied. Admin role required.' });
+class AuthRoute extends BaseRoute {
+    constructor() {
+        super('/api/auth');
+        this.initializeRoutes();
     }
-};
 
-router.post('/register', auth, admin, authController.register); // Only admin can create new accounts
-router.post('/login', authController.login);
+    // Admin check middleware
+    admin(req, res, next) {
+        if (req.user && req.user.role === 'admin') {
+            next();
+        } else {
+            res.status(403).json({ error: 'Access denied. Admin role required.' });
+        }
+    }
 
-router.get('/users', auth, admin, authController.getAllUsers);
-router.patch('/users/:email', auth, authController.updateUser); // Both can update (self-protection in controller)
-router.delete('/users/:email', auth, admin, authController.deleteUser);
+    initializeRoutes() {
+        this.router.post('/register', auth, this.admin, authController.register); // Only admin can create new accounts
+        this.router.post('/signup', authController.signup); // Public but requires secret key in body
+        this.router.post('/login', authController.login);
 
-router.get('/settings', auth, authController.getSettings);
-router.patch('/settings', auth, admin, authController.updateSettings);
+        this.router.get('/users', auth, this.admin, authController.getAllUsers);
+        this.router.patch('/users/:email', auth, authController.updateUser); // Both can update
+        this.router.delete('/users/:email', auth, this.admin, authController.deleteUser);
 
-module.exports = router;
+        this.router.get('/settings', auth, authController.getSettings);
+        this.router.patch('/settings', auth, this.admin, authController.updateSettings);
+    }
+}
+
+module.exports = AuthRoute;
