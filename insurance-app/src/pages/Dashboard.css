@@ -1,0 +1,44 @@
+.dashboard-container {
+    padding: 0;
+    max-width: 100%;
+    position: relative;
+    background: white;
+}
+
+.dashboard-content {
+    min-height: calc(100vh - 120px);
+}
+
+/* Data Source Toggle */
+.data-source-toggle {
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+    z-index: 2000;
+}
+
+.toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 2rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    box-shadow: var(--shadow-md);
+    transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.toggle-btn.demo-active {
+    background: #fffbeb;
+    color: #b45309;
+    border-color: #fcd34d;
+}

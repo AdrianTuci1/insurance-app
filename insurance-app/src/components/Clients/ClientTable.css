@@ -1,0 +1,210 @@
+.client-table-container {
+    width: 100%;
+    background: white;
+    position: relative;
+    /* Ensure no overflow issues that break sticky */
+}
+
+.client-table {
+    width: 100%;
+    border-collapse: separate;
+    /* Required for some sticky behaviors/borders */
+    border-spacing: 0;
+    font-size: 0.95rem;
+}
+
+/* Updated Sticky Logic */
+.client-table thead {
+    position: sticky;
+    top: 48px;
+    /* Align with HeaderFilters (now 48px) */
+    z-index: 10;
+}
+
+.client-table th {
+    text-align: left;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: #ffffff;
+    /* Solid white to cover rows behind */
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.075em;
+    white-space: nowrap;
+}
+
+/* Individual Column Styles */
+.th-status {
+    width: 140px;
+}
+
+.th-id {
+    width: 100px;
+}
+
+.th-customer {
+    min-width: 250px;
+}
+
+.th-type {
+    width: 120px;
+}
+
+.th-amount {
+    width: 150px;
+}
+
+.th-date {
+    width: 140px;
+}
+
+.th-action {
+    width: 40px;
+}
+
+/* Table Rows */
+.table-row {
+    transition: all 0.15s ease;
+    cursor: pointer;
+    background: white;
+}
+
+.table-row:hover {
+    background: #f8fafc;
+}
+
+.table-row td {
+    padding: 0.85rem 1.5rem;
+    border-bottom: 1px solid var(--border-soft);
+    vertical-align: middle;
+}
+
+/* Cells Styling */
+.cell-id {
+    font-weight: 600;
+    color: var(--text-main);
+    font-variant-numeric: tabular-nums;
+}
+
+.cell-name {
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 0.125rem;
+}
+
+.cell-sub {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.cell-amount {
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Badges & Tags */
+.status-badge {
+    padding: 0.35rem 0.85rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-block;
+}
+
+.status-complete {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.status-incomplete {
+    background: #fff1f2;
+    color: #e11d48;
+}
+
+.status-progress {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.status-not-started {
+    background: #f8fafc;
+    color: #64748b;
+}
+
+.type-tag {
+    padding: 0.25rem 0.5rem;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.paid-tag {
+    font-size: 0.65rem;
+    color: #059669;
+    background: #d1fae5;
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.action-cell {
+    text-align: right;
+    color: var(--text-light);
+    font-size: 1.25rem;
+    padding-right: 1.5rem !important;
+}
+
+/* Loading & Empty States */
+.table-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5rem 0;
+    color: var(--text-secondary);
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 2rem;
+    text-align: center;
+}
+
+.empty-icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    color: var(--text-light);
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+}
+
+/* Responsiveness */
+@media (max-width: 1024px) {
+
+    .th-type,
+    .th-date,
+    td:nth-child(4),
+    td:nth-child(6) {
+        display: none;
+    }
+}

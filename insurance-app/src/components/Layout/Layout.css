@@ -1,0 +1,13 @@
+.layout-container {
+    min-height: 100vh;
+    background-color: var(--bg-body);
+    position: relative;
+}
+
+.main-content {
+    /* No max-width as requested */
+    margin: 0;
+    padding: 0;
+    /* Space for sticky header - height is dynamic */
+    /* Header top is 64px, bottom is ~56px */
+}

@@ -1,0 +1,67 @@
+export const initialClients = [
+    {
+        id: 129004,
+        name: 'Patricia Holmes',
+        phone: '0722123456',
+        object: 'Apartament 2 Camere',
+        type: 'Locuinta',
+        status: 'Complete',
+        amount: '2400 €',
+        date: 'Oct 30, 2023',
+        documents: [{ name: 'Buletin.pdf' }, { name: 'Contract_Casa.pdf' }],
+        finalPolicy: 'Policy_129004.pdf',
+        paymentLink: ''
+    },
+    {
+        id: 149280,
+        name: 'Greenwich School',
+        phone: '0744987654',
+        object: 'Flota Auto',
+        type: 'RCA',
+        status: 'In Progress',
+        amount: '12500 €',
+        date: 'Oct 16, 2023',
+        documents: [{ name: 'Talon_Auto.pdf' }],
+        finalPolicy: '',
+        paymentLink: ''
+    },
+    {
+        id: 29436,
+        name: 'William Dale',
+        phone: '0766112233',
+        object: 'Casă de vacanță',
+        type: 'CASCO',
+        status: 'Not Started',
+        amount: '4500 €',
+        date: 'Oct 14, 2023',
+        documents: [],
+        finalPolicy: '',
+        paymentLink: ''
+    },
+    {
+        id: 33901,
+        name: 'Alex Cohen',
+        phone: '0788990011',
+        object: 'Asigurare de viata',
+        type: 'Viata',
+        status: 'Complete',
+        amount: '1200 €',
+        date: 'Oct 14, 2023',
+        documents: [{ name: 'Adeverinta_Medicala.pdf' }],
+        finalPolicy: 'Policy_33901.pdf',
+        paymentLink: ''
+    },
+    {
+        id: 45211,
+        name: 'Codie Smith',
+        phone: '0799887766',
+        object: 'Calatorie',
+        type: 'Calatorie',
+        status: 'Incomplete',
+        amount: '350 €',
+        date: 'Oct 12, 2023',
+        documents: [],
+        finalPolicy: '',
+        paymentLink: ''
+    },
+];

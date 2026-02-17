@@ -1,0 +1,70 @@
+.payment-card {
+    background-color: var(--bg-card);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    padding: var(--spacing-xl);
+}
+
+.payment-link-container {
+    padding: var(--spacing-md);
+    background-color: var(--success-bg);
+    border: 1px solid #bbf7d0;
+    border-radius: var(--radius-md);
+}
+
+.payment-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #166534;
+    /* green-800 */
+    text-transform: uppercase;
+    margin-bottom: var(--spacing-xs);
+    display: block;
+}
+
+.link-input-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.link-input {
+    flex: 1;
+    background-color: white;
+    border: 1px solid #bbf7d0;
+    color: #15803d;
+    /* green-700 */
+    font-size: 0.875rem;
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    outline: none;
+}
+
+.btn-copy {
+    padding: var(--spacing-sm);
+    background-color: white;
+    border: 1px solid #bbf7d0;
+    border-radius: var(--radius-sm);
+    color: #15803d;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.btn-copy:hover {
+    background-color: #dcfce7;
+}
+
+.payment-icon-wrapper {
+    display: inline-flex;
+    height: 40px;
+    width: 40px;
+    border-radius: var(--radius-full);
+    background-color: var(--success-bg);
+    align-items: center;
+    justify-content: center;
+    color: var(--success-color);
+}

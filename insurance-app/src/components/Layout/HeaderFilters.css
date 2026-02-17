@@ -1,0 +1,73 @@
+.header-filters-container {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+    border-bottom: 1px solid var(--border-color);
+    background: white;
+    /* More opaque for sticky layers */
+    position: relative;
+    /* Part of the sticky .header */
+    z-index: 900;
+    transition: all 0.3s ease;
+}
+
+.filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+
+    /* Hide scrollbar */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.filter-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.filter-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.filter-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-main);
+}
+
+.filter-btn.active {
+    background: var(--primary-light);
+    color: var(--primary-color);
+    border-color: rgba(37, 99, 235, 0.2);
+    font-weight: 600;
+}
+
+.close-icon {
+    opacity: 0.7;
+}
+
+.filter-btn.active:hover .close-icon {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .header-filters-container {
+        padding: 0.75rem 1rem;
+        top: 120px;
+        /* Adjust based on mobile header height */
+    }
+}

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oferta CASCO</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            line-height: 1.3;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            background-color: #f0f2f5;
+        }
+
+        .policy-preview-page {
+            background-color: white;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 10mm 15mm;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 2rem auto;
+        }
+
+        /* Header */
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .broker-logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-diamond {
+            width: 45px;
+            height: 45px;
+            background-color: #d32f2f;
+            transform: rotate(45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border: 1.5px solid #5d4037;
+        }
+
+        .logo-diamond span {
+            transform: rotate(-45deg);
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            position: absolute;
+        }
+
+        .logo-t {
+            top: 5px;
+            left: 5px;
+        }
+
+        .logo-b {
+            bottom: 5px;
+            right: 5px;
+        }
+
+        .broker-name {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .name-top {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #000;
+            letter-spacing: 0.5px;
+        }
+
+        .name-bottom {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #555;
+            letter-spacing: 1.5px;
+        }
+
+        /* Title Block */
+        .preview-title-block {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .preview-main-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.125rem;
+        }
+
+        .preview-date {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        /* Client Info */
+        .preview-client-info {
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .preview-client-info p {
+            margin-bottom: 0.25rem;
+        }
+
+        /* Tables */
+        .table-wrapper {
+            margin-bottom: 1.25rem;
+            overflow-x: auto;
+        }
+
+        .table-caption {
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.7rem;
+        }
+
+        .preview-table th,
+        .preview-table td {
+            border: 1px solid #000;
+            padding: 0.35rem 0.25rem;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .preview-table th {
+            background-color: #e0e0e0;
+            font-weight: 700;
+        }
+
+        .highlight-yellow {
+            background-color: #ffff00;
+            padding: 0 4px;
+            font-weight: 700;
+        }
+
+        /* Notes */
+        .preview-notes {
+            font-size: 0.75rem;
+        }
+
+        .red-bullet {
+            list-style-type: none;
+            position: relative;
+            padding-left: 1.25rem;
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+        }
+
+        .red-bullet::before {
+            content: "•";
+            color: red;
+            font-size: 1.5rem;
+            position: absolute;
+            left: 0;
+            top: -0.25rem;
+        }
+
+        .red-text {
+            color: red;
+        }
+
+        .risks-header {
+            margin-top: 1rem;
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .additional-header {
+            margin-bottom: 0.25rem;
+        }
+
+        .additional-list {
+            padding-left: 2rem;
+            list-style-type: disc;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .red-footer-note {
+            color: red;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            font-size: 0.7rem;
+        }
+
+        /* Footer */
+        .preview-footer {
+            border-top: 1px solid #777;
+            padding-top: 0.5rem;
+            font-size: 0.625rem;
+            color: #444;
+        }
+
+        .footer-company {
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .footer-details {
+            line-height: 1.25;
+        }
+
+        /* Editable fields highlight */
+        [contenteditable="true"]:focus {
+            outline: 2px solid #2196f3;
+            background-color: rgba(33, 150, 243, 0.05);
+            padding: 2px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="policy-preview-page">
+        <!-- Header Section -->
+        <div class="preview-header">
+            <div class="broker-logo-container">
+                <div class="logo-diamond">
+                    <span class="logo-t">T</span>
+                    <span class="logo-b">B</span>
+                </div>
+                <div class="broker-name">
+                    <span class="name-top">TRUST BROKERS</span>
+                    <span class="name-bottom">BROKER DE ASIGURARE</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Title Section -->
+        <div class="preview-title-block">
+            <h1 class="preview-main-title">
+                Tabel comparativ al ofertelor <span contenteditable="true" data-field="clientData.type">
+                    <%= clientData.type || 'CASCO' %>
+                </span>
+            </h1>
+            <p className="preview-date">
+                <%= new Date().toLocaleDateString('ro-RO') %>
+            </p>
+        </div>
+
+        <!-- Client Info Section -->
+        <div class="preview-client-info">
+            <p><strong>Asigurat:</strong> <span contenteditable="true" data-field="clientData.name">
+                    <%= (clientData.name || '' ).toUpperCase() %>
+                </span></p>
+            <p><strong>Obiectul asigurarii:</strong> <span contenteditable="true" data-field="clientData.object">
+                    <%= clientData.object || 'autoturism' %>
+                </span>, cu seria de sasiu: <span contenteditable="true" data-field="clientData.vin">
+                    <%= clientData.vin || 'N/A' %>
+                </span></p>
+        </div>
+
+        <!-- Table 1: Fara fransiza -->
+        <div class="table-wrapper">
+            <p class="table-caption">Oferta <span class="highlight-yellow">FARA</span> fransize pentru daune partiale
+            </p>
+            <table class="preview-table">
+                <thead>
+                    <tr>
+                        <th>Denumirea companiei de asigurari</th>
+                        <th>Prima de asigurare plata 1 rata in euro</th>
+                        <th>Prima de asigurare plata in 4 rate in euro</th>
+                        <th>Fransiza daune partiale in euro</th>
+                        <th>Fransiza furt/daune totale in % din SA</th>
+                        <th>Suma asigurata (SA) in euro</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (offersWithoutFranchise && offersWithoutFranchise.length> 0) { %>
+                        <% offersWithoutFranchise.forEach(function(offer, index) { %>
+                            <tr>
+                                <td><strong contenteditable="true"
+                                        data-field="offersWithoutFranchise.<%= index %>.company">
+                                        <%= offer.company %>
+                                    </strong></td>
+                                <td><strong contenteditable="true"
+                                        data-field="offersWithoutFranchise.<%= index %>.rate1">
+                                        <%= offer.rate1 %>
+                                    </strong></td>
+                                <td><strong contenteditable="true"
+                                        data-field="offersWithoutFranchise.<%= index %>.rate4">
+                                        <%= offer.rate4 %>
+                                    </strong></td>
+                                <td><strong contenteditable="true"
+                                        data-field="offersWithoutFranchise.<%= index %>.franchisePartial">
+                                        <%= offer.franchisePartial %>
+                                    </strong></td>
+                                <td><strong contenteditable="true"
+                                        data-field="offersWithoutFranchise.<%= index %>.franchiseTotal">
+                                        <%= offer.franchiseTotal %>
+                                    </strong></td>
+                                <td><strong contenteditable="true" data-field="offersWithoutFranchise.<%= index %>.sum">
+                                        <%= offer.sum %>
+                                    </strong></td>
+                            </tr>
+                            <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="6">Nu au fost găsite oferte fără fransiză.</td>
+                                    </tr>
+                                    <% } %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Table 2: Cu fransiza -->
+        <div class="table-wrapper">
+            <p class="table-caption">Oferta <span class="highlight-yellow">CU</span> fransize pentru daune partiale:</p>
+            <table class="preview-table">
+                <thead>
+                    <tr>
+                        <th>Denumirea companiei de asigurari</th>
+                        <th>Prima de asigurare plata 1 rata in euro</th>
+                        <th>Prima de asigurare plata in 4 rate in euro</th>
+                        <th>Fransiza daune partiale in euro</th>
+                        <th>Fransiza furt/daune totale in % din SA</th>
+                        <th>Suma asigurata (SA) in euro</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (offersWithFranchise && offersWithFranchise.length> 0) { %>
+                        <% offersWithFranchise.forEach(function(offer, index) { %>
+                            <tr>
+                                <td><strong contenteditable="true"
+                                        data-field="offersWithFranchise.<%= index %>.company">
+                                        <%= offer.company %>
+                                    </strong></td>
+                                <td><strong contenteditable="true" data-field="offersWithFranchise.<%= index %>.rate1">
+                                        <%= offer.rate1 %>
+                                    </strong></td>
+                                <td><strong contenteditable="true" data-field="offersWithFranchise.<%= index %>.rate4">
+                                        <%= offer.rate4 %>
+                                    </strong></td>
+                                <td><strong contenteditable="true"
+                                        data-field="offersWithFranchise.<%= index %>.franchisePartial">
+                                        <%= offer.franchisePartial %>
+                                    </strong></td>
+                                <td><strong contenteditable="true"
+                                        data-field="offersWithFranchise.<%= index %>.franchiseTotal">
+                                        <%= offer.franchiseTotal %>
+                                    </strong></td>
+                                <td><strong contenteditable="true" data-field="offersWithFranchise.<%= index %>.sum">
+                                        <%= offer.sum %>
+                                    </strong></td>
+                            </tr>
+                            <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="6">Nu au fost găsite oferte cu fransiză.</td>
+                                    </tr>
+                                    <% } %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Notes Section -->
+        <div class="preview-notes">
+            <ul>
+                <li class="red-bullet" contenteditable="true" data-field="notes">
+                    <%= notes
+                        || 'Ofertele urmatorilor asiguratori au fransiza de 20% atunci cand autoturismul este condus de o persoana tanara: Allianz-Tiriac (pana in 25 ani inclusiv), Generali (pana in 27 ani inclusiv), Omniasig (pana in 26 ani inclusiv)'
+                        %>
+                </li>
+            </ul>
+
+            <p class="risks-header"><strong>Riscuri incluse:</strong> <span contenteditable="true" data-field="risks">
+                    <%= risks
+                        || 'Avarii, Vandalism, Jante/Anvelope, Alti conducatori auto, Furt, Avarii produse in exclusivitate elementelor vitrate, Avarii provocate de alt autovehicul asigurat pentru raspundere civila auto, Asistenta rutiera, Fenomene naturale, Aspiratia apei la motor, Circulatia in afara drumurilor publice, pachet de acoperire de BAZA'
+                        %>
+                </span></p>
+
+            <p class="additional-header"><span class="highlight-yellow">Suplimentar se mai pot achizitiona urmatoarele
+                    acoperiri:</span></p>
+            <ul class="additional-list">
+                <li>Asistenta rutiera extinsa</li>
+                <li>Autoturism la schimb</li>
+            </ul>
+
+            <p class="red-footer-note">
+                Primele de asigurare din tabelele de mai sus, nu sunt valabile pentru utilizare rent-a-car, delivery,
+                taxi, scoala de soferi, paza si protectie, curierat. In cazul in care sunt utilizate in aceste domenii,
+                va rog sa ne informati si va adaptam oferta in functie de utilizarea masinii dumneavoastra.
+            </p>
+        </div>
+
+        <!-- Footer Section -->
+        <div class="preview-footer">
+            <p class="footer-company">TRUST BROKERS – Broker de Asigurare S.R.L.</p>
+            <p class="footer-details">Sediul social: București, Str. Parcului, nr. 55-57, et. 1, camera 5, sector 1;
+                C.U.I. 27942417; Nr. de ordine in registrul Comerțului J40/692/2011; Autorizat de Comisia de
+                Supraveghere a Asigurărilor prin Decizia 409/2011; Nr. înmatriculării în registrul brokerilor de
+                asigurare RBK-683/2011; Operator de date cu caracter personal înregistrat la ANSPDPC sub nr. 20541;
+                Telefon: 0752.500.078; Fax: 021.404.30.80; Email: office@trustbrokers.ro</p>
+        </div>
+    </div>
+</body>
+
+</html>
