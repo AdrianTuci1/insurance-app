@@ -6,9 +6,20 @@ import { API_CONFIG } from '../../config/api.config';
 const PolicyPreview = ({ clientData }) => {
     const today = new Date().toLocaleDateString('ro-RO');
 
-    const [htmlContent, setHtmlContent] = React.useState(null);
-    const [extractedData, setExtractedData] = React.useState(null);
-    const [jobId, setJobId] = React.useState(null);
+
+    const [htmlContent, setHtmlContent] = React.useState(clientData?.html || null);
+    const [extractedData, setExtractedData] = React.useState(clientData?.extractedData || null);
+    const [jobId, setJobId] = React.useState(clientData?.jobId || clientData?.id || null);
+
+    // Derived state or effect to update when props change
+    React.useEffect(() => {
+        if (clientData) {
+            if (clientData.html) setHtmlContent(clientData.html);
+            if (clientData.extractedData) setExtractedData(clientData.extractedData);
+            if (clientData.jobId || clientData.id) setJobId(clientData.jobId || clientData.id);
+        }
+    }, [clientData]);
+
     const [loading, setLoading] = React.useState(false);
     const [saving, setSaving] = React.useState(false);
     const [progress, setProgress] = React.useState(''); // To show status
@@ -16,79 +27,9 @@ const PolicyPreview = ({ clientData }) => {
 
     const previewRef = React.useRef(null);
 
-    const [token, setToken] = React.useState(localStorage.getItem('token')); // Simple auth state
+    // Removed internal auth token logic as this component is now purely presentation/edit
 
-    const connectToSSE = (jobId) => {
-        const eventSource = new EventSource(`${API_CONFIG.BASE_URL}/policies/events/${jobId}`);
-
-        eventSource.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-
-            if (data.status === 'in progress') {
-                setProgress(data.message || data.progress || 'In Progress...');
-            } else if (data.status === 'complete') {
-                setHtmlContent(data.html);
-                setExtractedData(data.extractedData);
-                setLoading(false);
-                setProgress('');
-                eventSource.close();
-            } else if (data.status === 'failed') {
-                setError(data.error || 'Job failed');
-                setLoading(false);
-                eventSource.close();
-            }
-        };
-
-        eventSource.onerror = () => {
-            console.error("SSE Error");
-            eventSource.close();
-            setError("Connection lost. Please try again.");
-            setLoading(false);
-        };
-    };
-
-    const handleFileUpload = async (event) => {
-        const files = event.target.files;
-        if (!files || files.length === 0) return;
-
-        if (!token) {
-            // Mock login for demo purposes if no token
-            const mockToken = prompt("Enter JWT Token (or just click OK to try anonymous/mock):");
-            if (mockToken) setToken(mockToken);
-            else {
-                alert("Authentication required. Please login.");
-                return;
-            }
-        }
-
-        setLoading(true);
-        setError(null);
-        setHtmlContent(null);
-        setProgress('Starting upload...');
-
-        const formData = new FormData();
-        for (let i = 0; i < files.length; i++) {
-            formData.append('documents', files[i]);
-        }
-        formData.append('type', 'casco');
-
-        // Use current token or the one just set
-        const currentToken = token || localStorage.getItem('token');
-
-        try {
-            const data = await apiService.post('/policies/process', formData);
-
-            if (data.jobId) {
-                setJobId(data.jobId);
-                setProgress('Job started. Connecting to stream...');
-                connectToSSE(data.jobId);
-            }
-        } catch (err) {
-            console.error(err);
-            setError(err.message);
-            setLoading(false);
-        }
-    };
+    // Removed connectToSSE and handleFileUpload as they are handled by parent/AddOfferModal
 
     const handleSave = async () => {
         if (!previewRef.current || !jobId) return;
@@ -97,7 +38,9 @@ const PolicyPreview = ({ clientData }) => {
         setError(null);
 
         // 1. Scrape the DOM for changes
-        const updatedData = { ...extractedData };
+        const updatedData = extractedData ? JSON.parse(JSON.stringify(extractedData)) : {};
+        // Deep copy safely
+
         const editableElements = previewRef.current.querySelectorAll('[data-field]');
 
         editableElements.forEach(el => {
@@ -111,7 +54,11 @@ const PolicyPreview = ({ clientData }) => {
                 if (!current[parts[i]]) current[parts[i]] = {};
                 current = current[parts[i]];
             }
-            current[parts[parts.length - 1]] = value;
+            if (!current) return; // Guard
+
+            // Check if array index
+            const lastKey = parts[parts.length - 1];
+            current[lastKey] = value;
         });
 
         try {
@@ -132,23 +79,8 @@ const PolicyPreview = ({ clientData }) => {
         <div className="policy-preview-container">
             <div className="policy-preview-page-container">
                 {!htmlContent && (
-                    <div className="upload-section">
-                        <h3>Generează Ofertă CASCO</h3>
-                        <p>Încarcă documentele (PDF/DOCX) pentru a extrage datele și a genera oferta.</p>
-                        <input
-                            type="file"
-                            multiple
-                            onChange={handleFileUpload}
-                            accept=".pdf,.docx"
-                            disabled={loading}
-                        />
-                        {loading && (
-                            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                                <div className="spinner" style={{ marginBottom: '0.5rem' }}>⏳</div>
-                                <p style={{ fontWeight: 'bold' }}>{progress}</p>
-                            </div>
-                        )}
-                        {error && <p className="error-text" style={{ color: 'red', marginTop: '1rem' }}>{error}</p>}
+                    <div className="empty-state" style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
+                        <p>No policy data available to preview.</p>
                     </div>
                 )}
 

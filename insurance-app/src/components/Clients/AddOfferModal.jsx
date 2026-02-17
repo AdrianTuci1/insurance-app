@@ -5,31 +5,53 @@ import { Save, Loader2 } from 'lucide-react';
 import Modal from '../Common/Modal';
 import PDFMergeZone from './PDFMergeZone';
 import { ClientBuilder } from '../../utils/ClientBuilder';
+import { useNavigate } from 'react-router-dom';
+import { apiService } from '../../services/api.service';
 import './AddOfferModal.css';
 
 const AddOfferModal = observer(({ isOpen, onClose }) => {
     const [type, setType] = useState('CASCO'); // Default selected CASCO
+    const [files, setFiles] = useState([]); // New file state
     const [isProcessing, setIsProcessing] = useState(false);
+    const navigate = useNavigate();
 
     const handleCreateOffer = async (e) => {
         e.preventDefault();
+
+        if (files.length === 0) {
+            alert("Please select at least one document.");
+            return;
+        }
+
         setIsProcessing(true);
 
-        // Simulate processing uploaded docs
-        setTimeout(() => {
-            const newClientData = new ClientBuilder()
-                .withBasicInfo({
-                    name: 'Extracted Name',
-                    phone: '0000000000',
-                    type: type,
-                    object: 'Extracted from documents'
-                })
-                .build();
+        try {
+            const formData = new FormData();
+            // Append files
+            files.forEach(file => {
+                formData.append('documents', file);
+            });
+            // Append type
+            formData.append('type', type);
 
-            clientStore.addClient(newClientData);
+            // Call API
+            const response = await apiService.post('/policies/process', formData);
+
+            if (response && response.jobId) {
+                // Success! Redirect to client page
+                // We don't need to wait for processing here.
+                onClose();
+                navigate(`/client/${response.jobId}`);
+            } else {
+                throw new Error("Invalid response from server");
+            }
+
+        } catch (error) {
+            console.error("Upload failed:", error);
+            alert("Failed to upload documents: " + error.message);
+        } finally {
             setIsProcessing(false);
-            onClose();
-        }, 1500);
+        }
     };
 
     return (
@@ -42,10 +64,10 @@ const AddOfferModal = observer(({ isOpen, onClose }) => {
                     <div className="loading-container">
                         <Loader2 className="animate-spin" size={48} color="var(--primary-color)" />
                         <p className="loading-title">
-                            Extracting data...
+                            Uploading documents...
                         </p>
                         <p className="loading-description">
-                            Working on your documents
+                            Starting extraction process
                         </p>
                     </div>
                 ) : (
@@ -75,7 +97,11 @@ const AddOfferModal = observer(({ isOpen, onClose }) => {
                         <div className="form-group form-group-large-margin">
                             <label className="detail-label">Source Documents</label>
                             <div className="merge-zone-wrapper">
-                                <PDFMergeZone showResync={false} />
+                                <PDFMergeZone
+                                    showResync={false}
+                                    files={files}
+                                    onFilesChange={setFiles}
+                                />
                             </div>
                         </div>
 
@@ -83,7 +109,7 @@ const AddOfferModal = observer(({ isOpen, onClose }) => {
                             <button
                                 type="submit"
                                 className="btn-solid btn-submit-large"
-                                disabled={isProcessing || !type}
+                                disabled={isProcessing || !type || files.length === 0}
                             >
                                 <Save size={18} />
                                 Create Offer

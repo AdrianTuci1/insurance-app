@@ -25,6 +25,9 @@ class PolicyRoute extends BaseRoute {
 
         // Update policy data
         this.router.put('/:id', auth, policyController.updatePolicyData);
+
+        // Get policy HTML
+        this.router.get('/:id/html', auth, policyController.getPolicyHtml);
     }
 }
 

@@ -6,7 +6,7 @@ const getAuthHeader = () => {
 };
 
 export const apiFetch = async (endpoint, options = {}) => {
-    const { method = 'GET', body, headers = {}, ...rest } = options;
+    const { method = 'GET', body, headers = {}, responseType, ...rest } = options;
 
     const url = `${API_CONFIG.BASE_URL}${endpoint}`;
 
@@ -34,13 +34,32 @@ export const apiFetch = async (endpoint, options = {}) => {
         const response = await fetch(url, config);
 
         if (response.status === 401) {
-            // Optional: handle token expiration
+            // Token expired or invalid
             console.error('Unauthorized access - potential token expiration');
+            localStorage.removeItem('token');
+            // Optional: Redirect to login or dispatch logout event
+            // window.location.href = '/login'; 
+        }
+
+        if (response.status === 400) {
+            const errorData = await response.clone().json().catch(() => ({}));
+            if (errorData.error === 'Invalid token.') {
+                console.error('Invalid token detected. Clearing session.');
+                localStorage.removeItem('token');
+                // window.location.href = '/login';
+            }
         }
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        }
+
+        if (responseType === 'text') {
+            return await response.text();
+        }
+        if (responseType === 'blob') {
+            return await response.blob();
         }
 
         return await response.json();

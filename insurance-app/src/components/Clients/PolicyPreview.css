@@ -16,7 +16,7 @@
     padding: 1rem;
     margin-bottom: 1rem;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -55,7 +55,7 @@
     background-color: white;
     width: 210mm;
     min-height: 297mm;
-    padding: 10mm 15mm;
+    padding: 1mm 15mm;
     /* Reduced padding to give more horizontal room */
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -64,197 +64,6 @@
     margin-bottom: 2rem;
 }
 
-/* Header */
-.preview-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-}
-
-.broker-logo-container {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.logo-diamond {
-    width: 45px;
-    height: 45px;
-    background-color: #d32f2f;
-    transform: rotate(45deg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    border: 1.5px solid #5d4037;
-}
-
-.logo-diamond span {
-    transform: rotate(-45deg);
-    color: white;
-    font-weight: bold;
-    font-size: 1rem;
-    position: absolute;
-}
-
-.logo-t {
-    top: 5px;
-    left: 5px;
-}
-
-.logo-b {
-    bottom: 5px;
-    right: 5px;
-}
-
-.broker-name {
-    display: flex;
-    flex-direction: column;
-}
-
-.name-top {
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: #000;
-    letter-spacing: 0.5px;
-}
-
-.name-bottom {
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: #555;
-    letter-spacing: 1.5px;
-}
-
-/* Title Block */
-.preview-title-block {
-    text-align: center;
-    margin-bottom: 1rem;
-}
-
-.preview-main-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin-bottom: 0.125rem;
-}
-
-.preview-date {
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-/* Client Info */
-.preview-client-info {
-    margin-bottom: 1rem;
-    font-size: 0.875rem;
-}
-
-.preview-client-info p {
-    margin-bottom: 0.25rem;
-}
-
-/* Tables */
-.table-wrapper {
-    margin-bottom: 1.25rem;
-    overflow-x: auto;
-    /* Allow horizontal scroll if squeezed */
-}
-
-.table-caption {
-    font-size: 0.875rem;
-    margin-bottom: 0.25rem;
-    font-weight: 500;
-}
-
-.preview-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.7rem;
-    /* Smaller font for 6 columns */
-}
-
-.preview-table th,
-.preview-table td {
-    border: 1px solid #000;
-    padding: 0.35rem 0.25rem;
-    text-align: center;
-    vertical-align: middle;
-}
-
-.preview-table th {
-    background-color: #e0e0e0;
-    font-weight: 700;
-}
-
-.highlight-yellow {
-    background-color: #ffff00;
-    padding: 0 4px;
-    font-weight: 700;
-}
-
-/* Notes */
-.preview-notes {
-    font-size: 0.75rem;
-}
-
-.red-bullet {
-    list-style-type: none;
-    position: relative;
-    padding-left: 1.25rem;
-    margin-bottom: 0.75rem;
-    font-weight: 700;
-}
-
-.red-bullet::before {
-    content: "•";
-    color: red;
-    font-size: 1.5rem;
-    position: absolute;
-    left: 0;
-    top: -0.25rem;
-}
-
-.red-text {
-    color: red;
-}
-
-.risks-header {
-    margin-top: 1rem;
-    margin-bottom: 0.75rem;
-    line-height: 1.2;
-}
-
-.additional-header {
-    margin-bottom: 0.25rem;
-}
-
-.additional-list {
-    padding-left: 2rem;
-    list-style-type: disc;
-    margin-bottom: 1rem;
-    font-weight: 700;
-}
-
-.red-footer-note {
-    color: red;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    font-size: 0.7rem;
-}
-
-/* Footer */
-.preview-footer {
-    border-top: 1px solid #777;
-    padding-top: 0.5rem;
-    font-size: 0.625rem;
-    color: #444;
-}
-
-.footer-company {
-    font-weight: 700;
-    margin-bottom: 2px;
-}
-
-.footer-details {
-    line-height: 1.25;
+.generated-policy-content {
+    margin-top: 500px;
 }

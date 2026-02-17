@@ -115,6 +115,48 @@ class ClientStore {
         }
         this.fetchClients();
     }
+
+    connectToSSE() {
+        if (this.isDemoMode) return;
+
+        // Close existing connection if any (to avoid duplicates)
+        if (this.eventSource) {
+            this.eventSource.close();
+        }
+
+        // We use a general events endpoint if available, or listen to specific job updates
+        // Since the requirement is to update the dashboard when a background job completes,
+        // we might need a global event stream or just rely on manual refresh/polling for now
+        // if the backend doesn't support a global stream.
+        // CHECK: The backend routes showed `router.get('/events/:id', ...)` but no global stream.
+        // If we don't have a global stream, we can't easily listen for *any* completion without polling.
+        // However, for the specific user flow (Upload -> Redirect -> ClientDetail), the ClientDetail
+        // page will connect to the specific job SSE.
+        // For the Dashboard, we can implement a simple poll or just rely on the user refreshing/navigating.
+
+        // REVISION: The plan mentioned "Global SSE". If the backend doesn't support it, 
+        // I will implement a polling mechanism for the dashboard or just leave it for now 
+        // and focus on the specific ClientDetail SSE which is critical for the "Processing" state.
+
+        // Let's implement a safe poller for the dashboard for now to ensure list is up to date.
+        this.startPolling();
+    }
+
+    stopPolling() {
+        if (this.pollInterval) {
+            clearInterval(this.pollInterval);
+            this.pollInterval = null;
+        }
+    }
+
+    startPolling() {
+        this.stopPolling();
+        this.pollInterval = setInterval(() => {
+            if (!this.loading) {
+                this.fetchClients(); // Silent fetch could be better to avoid flickering
+            }
+        }, 10000); // Poll every 10 seconds
+    }
 }
 
 export const clientStore = new ClientStore();

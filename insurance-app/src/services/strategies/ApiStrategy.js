@@ -16,6 +16,17 @@ export class ApiStrategy extends IDataStrategy {
         // This might need adjustment based on how the store uses it vs direct API calls
         // For now, adhering to the pattern where we fetch full details
         const fullData = await apiService.get(`/policies/status/${id}`);
+
+        // Fetch HTML separately if available (status complete or has data)
+        let htmlContent = null;
+        if (fullData.status === 'complete' || fullData.extractedData) {
+            try {
+                htmlContent = await apiService.get(`/policies/${id}/html`, { responseType: 'text' });
+            } catch (error) {
+                console.warn('Failed to fetch policy HTML:', error);
+            }
+        }
+
         return {
             ...fullData,
             id: fullData.jobId,
@@ -26,6 +37,7 @@ export class ApiStrategy extends IDataStrategy {
                 fullData.status === 'failed' ? 'Incomplete' :
                     fullData.status === 'in progress' ? 'In Progress' : 'Not Started',
             amount: fullData.extractedData?.offersWithFranchise?.[0]?.rate1 || '0 €',
+            html: htmlContent, // Use independently fetched HTML
             originalData: fullData // Keep original structure if needed
         };
     }

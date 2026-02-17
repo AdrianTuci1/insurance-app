@@ -1,5 +1,5 @@
 
-const { PutCommand, GetCommand, UpdateCommand, QueryCommand, ScanCommand } = require("@aws-sdk/lib-dynamodb");
+const { PutCommand, GetCommand, UpdateCommand, QueryCommand, ScanCommand, DeleteCommand } = require("@aws-sdk/lib-dynamodb");
 const docClient = require('../config/db.config');
 const env = require('../config/env.config');
 const dynamoQuery = require('../utils/dynamoQuery.util');
@@ -34,13 +34,20 @@ class Job {
             expAttrValues[`:${key}`] = value;
         }
 
-        await docClient.send(new UpdateCommand({
-            TableName: TABLE_NAME,
-            Key: { jobId },
-            UpdateExpression: updateExp,
-            ExpressionAttributeNames: expAttrNames,
-            ExpressionAttributeValues: expAttrValues
-        }));
+        console.log(`[JobModel] Updating status for ${jobId} to ${status}`);
+        try {
+            await docClient.send(new UpdateCommand({
+                TableName: TABLE_NAME,
+                Key: { jobId },
+                UpdateExpression: updateExp,
+                ExpressionAttributeNames: expAttrNames,
+                ExpressionAttributeValues: expAttrValues
+            }));
+            console.log(`[JobModel] Update successful for ${jobId}`);
+        } catch (error) {
+            console.error(`[JobModel] Update failed for ${jobId}:`, error);
+            throw error;
+        }
     }
 
     static async markAsPaid(jobId, paymentId) {
@@ -83,6 +90,12 @@ class Job {
             items: result.Items,
             lastEvaluatedKey: result.LastEvaluatedKey
         };
+    }
+    static async delete(jobId) {
+        await docClient.send(new DeleteCommand({
+            TableName: TABLE_NAME,
+            Key: { jobId }
+        }));
     }
 }
 

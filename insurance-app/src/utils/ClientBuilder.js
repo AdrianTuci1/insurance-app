@@ -20,6 +20,7 @@ export class ClientBuilder {
             documents: data.documents || [],
             finalPolicy: data.finalPolicy || null,
             finalPolicyUrl: data.finalPolicyUrl || null,
+            html: data.html || null,
             originalData: data.originalData || data
         };
     }
@@ -73,11 +74,12 @@ export class ClientBuilder {
         builder.client.status = builder.normalizeStatus(apiData.status);
         builder.client.originalData = apiData;
 
-        // Mock a final policy URL if complete
         if (builder.client.status === 'Complete') {
             builder.client.finalPolicy = apiData.finalPolicy || 'Policy_Generated.pdf';
             builder.client.finalPolicyUrl = apiData.finalPolicyUrl || '#';
         }
+
+        builder.client.html = apiData.html || null;
 
         return builder;
     }

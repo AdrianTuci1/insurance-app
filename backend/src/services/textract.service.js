@@ -7,6 +7,7 @@ class TextractService {
     }
 
     async startTextractJob(s3Key) {
+        Logger.info(`Starting Textract job for key: ${s3Key}`);
         const command = new StartDocumentAnalysisCommand({
             DocumentLocation: {
                 S3Object: {
@@ -14,20 +15,21 @@ class TextractService {
                     Name: s3Key
                 }
             },
-            FeatureTypes: []
+            FeatureTypes: ["FORMS", "TABLES"]
         });
 
         try {
             const response = await this.client.send(command);
-            Logger.info(`Started Textract Job: ${response.JobId}`);
+            Logger.info(`Textract job started successfully. JobId: ${response.JobId}`);
             return response.JobId;
         } catch (error) {
-            Logger.error("Textract Start Job Error:", error);
+            Logger.error(`Failed to start Textract job for ${s3Key}:`, error);
             throw error;
         }
     }
 
     async waitForTextractJob(jobId) {
+        Logger.info(`Polling Textract job: ${jobId}`);
         let finished = false;
         let fullText = "";
         let nextToken = undefined;
@@ -39,6 +41,7 @@ class TextractService {
                 const status = response.JobStatus;
 
                 if (status === "SUCCEEDED") {
+                    Logger.info(`Textract job ${jobId} succeeded (token: ${nextToken ? 'yes' : 'no'}).`);
                     const text = response.Blocks
                         .filter(block => block.BlockType === 'LINE')
                         .map(line => line.Text)
@@ -52,8 +55,10 @@ class TextractService {
                         finished = true;
                     }
                 } else if (status === "FAILED") {
+                    Logger.error(`Textract job ${jobId} failed with status: ${status}, Message: ${response.StatusMessage}`);
                     throw new Error(`Textract Job ${jobId} Failed`);
                 } else {
+                    // Logger.debug(`Job ${jobId} status: ${status}`);
                     await new Promise(resolve => setTimeout(resolve, 2000));
                 }
             } catch (error) {

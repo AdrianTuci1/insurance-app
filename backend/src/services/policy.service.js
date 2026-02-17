@@ -58,6 +58,7 @@ class PolicyService {
         };
 
         await Job.create(jobData);
+        Logger.info(`[Job ${jobId}] Job created in DB. Starting background processing...`);
 
         // Start background processing
         this.processFilesInBackground(jobId, files, type || 'casco');
@@ -69,20 +70,28 @@ class PolicyService {
         try {
             Logger.info(`[Job ${jobId}] Starting background processing for ${files.length} files.`);
 
+            Logger.info(`[Job ${jobId}] Updating status to 'in progress'...`);
             await Job.updateStatus(jobId, 'in progress');
+            Logger.info(`[Job ${jobId}] Status updated. Sending SSE 'initializing'...`);
             this.sendSSEEvent(jobId, { status: 'in progress', stage: 'initializing', message: 'Starting processing pipeline...' });
 
             let promptTemplate;
             try {
-                const policyModule = require(`../policies/${policyType}/prompt`);
+                Logger.info(`[Job ${jobId}] Loading prompt template for ${policyType}...`);
+                // Policy modules are in backend/policies (sibling to src), so ../../policies
+                // Also ensure type is lowercase to match directory structure (casco vs CASCO)
+                const policyModule = require(`../../policies/${policyType.toLowerCase()}/prompt`);
                 promptTemplate = policyModule.PROMPT;
+                Logger.info(`[Job ${jobId}] Prompt template loaded.`);
             } catch (err) {
-                const errorMsg = `Invalid policy type: ${policyType}`;
+                const errorMsg = `Invalid policy type: ${policyType} (path: ../../policies/${policyType.toLowerCase()}/prompt)`;
+                Logger.error(`[Job ${jobId}] Error loading template:`, err);
                 await Job.updateStatus(jobId, 'failed', { error: errorMsg });
                 this.sendSSEEvent(jobId, { status: 'failed', error: errorMsg });
                 return;
             }
 
+            Logger.info(`[Job ${jobId}] Sending SSE 'textract_start'...`);
             this.sendSSEEvent(jobId, { status: 'in progress', stage: 'textract_start', message: 'Initiating document analysis...' });
 
             const startLimit = pLimit(10);
@@ -97,10 +106,13 @@ class PolicyService {
 
             await Promise.all(docStates.map(doc => startLimit(async () => {
                 try {
+                    Logger.info(`[Job ${jobId}] Requesting Textract for: ${doc.originalName}`);
                     const tJobId = await textractService.startTextractJob(doc.key);
                     doc.textractJobId = tJobId;
                     doc.status = 'textract_started';
+                    Logger.info(`[Job ${jobId}] Textract started for ${doc.originalName} (ID: ${tJobId})`);
                 } catch (err) {
+                    Logger.error(`[Job ${jobId}] Failed to start Textract for ${doc.originalName}:`, err);
                     doc.status = 'failed';
                     doc.error = err.message;
                 }
@@ -118,7 +130,9 @@ class PolicyService {
 
                 try {
                     const text = await textractService.waitForTextractJob(doc.textractJobId);
+                    Logger.info(`[Job ${jobId}] Extracted ${text.length} chars from ${doc.originalName}. Sending to Bedrock...`);
                     const data = await bedrockService.extractDataWithBedrock(text, promptTemplate);
+                    Logger.info(`[Job ${jobId}] processed ${doc.originalName} with Bedrock.`);
 
                     doc.status = 'analyzed';
                     doc.data = data;
@@ -159,26 +173,51 @@ class PolicyService {
                 notes: validDocs[0].data.notes || ''
             };
 
+            const { deduplicateOffers } = require('../utils/deduplicateData');
+
             validDocs.forEach(doc => {
                 const result = doc.data;
                 if (result.offersWithoutFranchise) aggregatedData.offersWithoutFranchise.push(...result.offersWithoutFranchise);
                 if (result.offersWithFranchise) aggregatedData.offersWithFranchise.push(...result.offersWithFranchise);
             });
 
-            const html = await templateService.renderTemplate(policyType, aggregatedData);
+            // Deduplicate aggregated offers
+            aggregatedData.offersWithoutFranchise = deduplicateOffers(aggregatedData.offersWithoutFranchise);
+            aggregatedData.offersWithFranchise = deduplicateOffers(aggregatedData.offersWithFranchise);
 
             await Job.updateStatus(jobId, 'complete', {
-                html,
                 extractedData: aggregatedData,
                 documents: docStates
             });
+
+            // Generate HTML for the completed policy
+            const html = await templateService.renderTemplate(policyType, aggregatedData);
 
             this.sendSSEEvent(jobId, { status: 'complete', html, extractedData: aggregatedData });
 
         } catch (error) {
             console.error(`[Job ${jobId}] Fatal Error:`, error);
-            await Job.updateStatus(jobId, 'failed', { error: error.message });
-            this.sendSSEEvent(jobId, { status: 'failed', error: error.message });
+
+            try {
+                // Cleanup on failure
+                Logger.info(`[Job ${jobId}] Cleaning up failed job resources...`);
+
+                // 1. Delete files from S3
+                if (files && files.length > 0) {
+                    await Promise.all(files.map(f => s3Service.deleteFile(f.key).catch(e => Logger.warn(`Failed to delete S3 file ${f.key}:`, e))));
+                }
+
+                // 2. Delete Job from DB
+                await Job.delete(jobId);
+                Logger.info(`[Job ${jobId}] Cleanup successful. Job deleted.`);
+
+                this.sendSSEEvent(jobId, { status: 'failed', error: error.message, deleted: true });
+            } catch (cleanupError) {
+                Logger.error(`[Job ${jobId}] Cleanup failed:`, cleanupError);
+                // Still try to update status if delete failed, though job might be gone or half-gone
+                await Job.updateStatus(jobId, 'failed', { error: error.message });
+                this.sendSSEEvent(jobId, { status: 'failed', error: error.message });
+            }
         }
     }
 
@@ -188,6 +227,19 @@ class PolicyService {
             throw new ApiError(404, 'Job not found');
         }
         return job;
+    }
+
+    async getPolicyHtml(jobId) {
+        const job = await Job.findById(jobId);
+        if (!job) {
+            throw new ApiError(404, 'Job not found');
+        }
+
+        // Generate HTML on demand
+        // Use extractedData or clientData from job
+        const data = job.extractedData || job.clientData || {};
+        const html = await templateService.renderTemplate(job.policyType, data);
+        return html;
     }
 
     async updatePolicyData(jobId, extractedData) {
@@ -204,7 +256,6 @@ class PolicyService {
 
         await Job.updateStatus(jobId, 'complete', {
             extractedData,
-            html,
             updatedAt: new Date().toISOString()
         });
 

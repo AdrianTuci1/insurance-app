@@ -1,7 +1,11 @@
 
 exports.PROMPT = `
 You are an expert insurance policy analyzer. extract the following information from the policy documents provided in the text below.
-Return the output STRICTLY as a JSON object with the following structure. Do not include any markdown formatting (like \`\`\`json).
+Return the output STRICTLY as a valid JSON object.
+- Do NOT include any markdown formatting (like \`\`\`json).
+- Do NOT include any text before or after the JSON.
+- Ensure there are NO trailing commas.
+- Ensure all keys and string values are enclosed in double quotes.
 
 Structure:
 {

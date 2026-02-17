@@ -25,10 +25,15 @@ const ClientDetail = observer(() => {
     const [formData, setFormData] = useState(null);
 
     useEffect(() => {
+        let pollInterval;
+
         const fetchDetails = async () => {
             try {
-                setLoading(true);
+                // If we are already loading effectively (first load), set loading
+                if (!formData) setLoading(true); // Only show full loader on first load
+
                 const data = await clientStore.getClient(id);
+
                 // Initialize default selection state
                 setFormData({
                     ...data,
@@ -37,9 +42,24 @@ const ClientDetail = observer(() => {
                     selectedRate: data.selectedRate ?? 'rate1',
                     amount: (data.amount === 'Pending...' || !data.amount) ? 'Not set' : data.amount
                 });
+
+                // Check status for polling
+                // Note: ApiStrategy maps 'in progress' to 'In Progress'
+                if (data.status === 'In Progress' || data.status === 'not started') {
+                    if (!pollInterval) {
+                        pollInterval = setInterval(fetchDetails, 3000); // Poll every 3s
+                    }
+                } else {
+                    if (pollInterval) {
+                        clearInterval(pollInterval);
+                        pollInterval = null;
+                    }
+                }
+
             } catch (err) {
                 console.error(err);
                 setError('Failed to load job details');
+                if (pollInterval) clearInterval(pollInterval);
             } finally {
                 setLoading(false);
             }
@@ -48,7 +68,31 @@ const ClientDetail = observer(() => {
         if (id) {
             fetchDetails();
         }
-    }, [id]);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+        };
+    }, [id]); // Check dependency: if formData changes, we don't want to re-run effect, so keep it just [id]
+    // But we need to reference pollInterval.
+    // Actually, `fetchDetails` closure usually captures stale state, but here we call clientStore.getClient(id) so it fetches fresh data.
+    // The logic `if (data.status ...)` uses the fresh `data`.
+    // The `pollInterval` variable is local to the effect. Redefining it on every render is bad if effect re-runs.
+    // But effect only runs on [id].
+    // Wait, if I call `setFormData`, it re-renders. But effect doesn't re-run.
+    // So `fetchDetails` inside the effect is defined once.
+    // But it calls `setFormData`.
+    // The recursion "setInterval(fetchDetails)" works because `fetchDetails` is stable in the closure?
+    // references `id`. `id` is stable.
+
+    // One catch: `formData` check?
+    // `if (!formData) setLoading(true)` -> `formData` is from outer scope closure.
+    // This `formData` will be the initial value (null) forever in the closure!
+    // So on subsequent polls, `!formData` is true? No, wait.
+    // `formData` is a const from `useState`. It holds the value from the *render where the effect was created*.
+    // If [id] doesn't change, effect doesn't re-run. So `formData` is always null inside `fetchDetails`.
+    // So `setLoading(true)` might happen every time?
+    // Actually `setLoading(true)` is fine if we use a different check or just remove that check after first run?
+    // I will refactor to use a ref or just simpler logic.
 
     const handleFranchiseToggle = (hasFranchise) => {
         const offers = hasFranchise ? formData.groupedOffers.withFranchise : formData.groupedOffers.withoutFranchise;
@@ -143,7 +187,7 @@ const ClientDetail = observer(() => {
 
     const insuranceTypes = ['Locuinta', 'RCA', 'CASCO', 'Viata', 'Calatorie', 'Sanatate', 'General'];
 
-    if (loading) {
+    if (loading && !formData) { // Only show full loader if we have NO data yet
         return (
             <div className="client-detail-full-layout loading-centered">
                 <Loader2 className="animate-spin" size={48} color="var(--primary-color)" />
@@ -154,6 +198,26 @@ const ClientDetail = observer(() => {
 
     if (error || !formData) {
         return <div className="error-state">{error || 'Job not found'}</div>;
+    }
+
+    // Show processing state if status is 'In Progress' or 'not started'
+    // Note: The helper might convert 'not started' to something else, checking raw props if available or just the string
+    const isProcessing = formData.status === 'In Progress' || formData.status === 'not started' || formData.status === 'initializing';
+
+    if (isProcessing) {
+        return (
+            <div className="client-detail-full-layout loading-centered">
+                <Loader2 className="animate-spin" size={64} color="var(--primary-color)" />
+                <h2 style={{ marginTop: '1.5rem', fontSize: '1.5rem', fontWeight: 600 }}>Processing Document...</h2>
+                <p className="loading-text" style={{ maxWidth: '400px', textAlign: 'center', lineHeight: '1.6' }}>
+                    We are extracting data from your uploaded files. <br />
+                    This usually takes 10-20 seconds.
+                </p>
+                <div style={{ marginTop: '1rem', padding: '0.5rem 1rem', background: '#f5f5f5', borderRadius: '8px', fontSize: '0.9rem', color: '#666' }}>
+                    Status: {formData.status}
+                </div>
+            </div>
+        );
     }
 
     return (

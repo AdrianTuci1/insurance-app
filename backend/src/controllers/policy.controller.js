@@ -30,6 +30,12 @@ class PolicyController {
         res.json(job);
     });
 
+    getPolicyHtml = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const html = await policyService.getPolicyHtml(id);
+        res.send(html);
+    });
+
     updatePolicyData = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const { extractedData } = req.body;

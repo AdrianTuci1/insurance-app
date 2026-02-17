@@ -2,16 +2,34 @@ import { useState, useRef, useEffect } from 'react';
 import { FileText, Upload, X, Check, File, Trash2, RefreshCw } from 'lucide-react';
 import './PDFMergeZone.css';
 
-const PDFMergeZone = ({ initialDocuments = [], onUpdate, showResync = true }) => {
-    const [files, setFiles] = useState([]); // This is for NEW uploads
-    const [existingDocs, setExistingDocs] = useState(initialDocuments);
+
+const PDFMergeZone = ({ initialDocuments, onUpdate, showResync = true, files: controlledFiles, onFilesChange }) => {
+    const [existingDocs, setExistingDocs] = useState(initialDocuments || []);
     const [isDragging, setIsDragging] = useState(false);
-    const [isMerging, setIsMerging] = useState(false);
     const [resyncing, setResyncing] = useState(false);
     const fileInputRef = useRef(null);
 
+    // Determine if controlled
+    const isControlled = Array.isArray(controlledFiles) && typeof onFilesChange === 'function';
+    // Local state for uncontrolled usage
+    const [localFiles, setLocalFiles] = useState([]);
+
+    // Effective files
+    const files = isControlled ? controlledFiles : localFiles;
+
+    // Effective updater
+    const updateFiles = (newFiles) => {
+        if (isControlled) {
+            onFilesChange(newFiles);
+        } else {
+            setLocalFiles(newFiles);
+        }
+    }
+
     useEffect(() => {
-        setExistingDocs(initialDocuments);
+        if (initialDocuments) {
+            setExistingDocs(initialDocuments);
+        }
     }, [initialDocuments]);
 
     const onDragOver = (e) => {
@@ -27,12 +45,12 @@ const PDFMergeZone = ({ initialDocuments = [], onUpdate, showResync = true }) =>
         e.preventDefault();
         setIsDragging(false);
         const droppedFiles = Array.from(e.dataTransfer.files).filter(file => file.type === 'application/pdf');
-        setFiles(prev => [...prev, ...droppedFiles]);
+        updateFiles([...files, ...droppedFiles]);
     };
 
     const onFileSelect = (e) => {
         const selectedFiles = Array.from(e.target.files).filter(file => file.type === 'application/pdf');
-        setFiles(prev => [...prev, ...selectedFiles]);
+        updateFiles([...files, ...selectedFiles]);
     };
 
     const removeExistingDoc = (docName) => {
@@ -43,28 +61,17 @@ const PDFMergeZone = ({ initialDocuments = [], onUpdate, showResync = true }) =>
 
     const handleResync = () => {
         setResyncing(true);
-        // Simulate extraction resync
+        // Simulate extraction resync - in real app this would call an API
         setTimeout(() => {
             setResyncing(false);
             alert('Data resynced from documents successfully!');
         }, 1500);
     };
 
-    const handleUploadComplete = () => {
-        setIsMerging(true);
-        // Simulate processing new uploads
-        setTimeout(() => {
-            const newDocs = files.map(f => ({ name: f.name }));
-            const updatedDocs = [...existingDocs, ...newDocs];
-            setExistingDocs(updatedDocs);
-            setFiles([]);
-            setIsMerging(false);
-            if (onUpdate) onUpdate(updatedDocs);
-        }, 1500);
-    };
+    // Removed handleUploadComplete simulation
 
     const removeFile = (index) => {
-        setFiles(prev => prev.filter((_, i) => i !== index));
+        updateFiles(files.filter((_, i) => i !== index));
     };
 
     return (
@@ -93,10 +100,10 @@ const PDFMergeZone = ({ initialDocuments = [], onUpdate, showResync = true }) =>
 
             {/* Current Documents List */}
             <div className="manage-docs-list" style={{ marginTop: '1.5rem' }}>
-                <h4 className="file-list-title">Current Documents ({existingDocs.length})</h4>
+                <h4 className="file-list-title">Current Documents ({existingDocs.length + files.length})</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
                     {existingDocs.map((doc, index) => (
-                        <div key={index} className="file-item">
+                        <div key={`exist-${index}`} className="file-item">
                             <div className="file-info">
                                 <File size={16} style={{ color: 'var(--text-light)' }} />
                                 <span className="file-name">{doc.name}</span>
@@ -114,7 +121,7 @@ const PDFMergeZone = ({ initialDocuments = [], onUpdate, showResync = true }) =>
                         <div key={`new-${index}`} className="file-item new-file-item">
                             <div className="file-info">
                                 <File size={16} style={{ color: 'var(--primary-color)' }} />
-                                <span className="file-name" style={{ color: 'var(--primary-color)' }}>{file.name} (uploading...)</span>
+                                <span className="file-name" style={{ color: 'var(--primary-color)' }}>{file.name} (Ready to upload)</span>
                             </div>
                             <button
                                 onClick={() => removeFile(index)}
@@ -127,17 +134,7 @@ const PDFMergeZone = ({ initialDocuments = [], onUpdate, showResync = true }) =>
                 </div>
             </div>
 
-            {/* New Files Action */}
-            {files.length > 0 && (
-                <button
-                    onClick={handleUploadComplete}
-                    disabled={isMerging}
-                    className="btn btn-primary"
-                    style={{ width: '100%', padding: '0.75rem', marginTop: '1rem', borderRadius: '12px' }}
-                >
-                    {isMerging ? 'Processing...' : `Add ${files.length} New Document${files.length > 1 ? 's' : ''}`}
-                </button>
-            )}
+            {/* Removed "Add New Documents" button inside here; parent controls submission */}
 
             {/* Global Resync Action at bottom - Only if showResync is true */}
             {showResync && (
