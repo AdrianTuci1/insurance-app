@@ -294,22 +294,22 @@
                                     </strong></td>
                                 <td><strong contenteditable="true"
                                         data-field="offersWithoutFranchise.<%= index %>.rate1">
-                                        <%= offer.rate1 %>
+                                        <%= offer.rate1 || '0' %>
                                     </strong></td>
                                 <td><strong contenteditable="true"
                                         data-field="offersWithoutFranchise.<%= index %>.rate4">
-                                        <%= offer.rate4 %>
+                                        <%= offer.rate4 || '0' %>
                                     </strong></td>
                                 <td><strong contenteditable="true"
                                         data-field="offersWithoutFranchise.<%= index %>.franchisePartial">
-                                        <%= offer.franchisePartial %>
+                                        <%= offer.franchisePartial || '0' %>
                                     </strong></td>
                                 <td><strong contenteditable="true"
                                         data-field="offersWithoutFranchise.<%= index %>.franchiseTotal">
-                                        <%= offer.franchiseTotal %>
+                                        <%= offer.franchiseTotal || '0' %>
                                     </strong></td>
                                 <td><strong contenteditable="true" data-field="offersWithoutFranchise.<%= index %>.sum">
-                                        <%= offer.sum %>
+                                        <%= offer.sum || '0' %>
                                     </strong></td>
                             </tr>
                             <% }); %>
@@ -345,21 +345,21 @@
                                         <%= offer.company %>
                                     </strong></td>
                                 <td><strong contenteditable="true" data-field="offersWithFranchise.<%= index %>.rate1">
-                                        <%= offer.rate1 %>
+                                        <%= offer.rate1 || '0' %>
                                     </strong></td>
                                 <td><strong contenteditable="true" data-field="offersWithFranchise.<%= index %>.rate4">
-                                        <%= offer.rate4 %>
+                                        <%= offer.rate4 || '0' %>
                                     </strong></td>
                                 <td><strong contenteditable="true"
                                         data-field="offersWithFranchise.<%= index %>.franchisePartial">
-                                        <%= offer.franchisePartial %>
+                                        <%= offer.franchisePartial || '0' %>
                                     </strong></td>
                                 <td><strong contenteditable="true"
                                         data-field="offersWithFranchise.<%= index %>.franchiseTotal">
-                                        <%= offer.franchiseTotal %>
+                                        <%= offer.franchiseTotal || '0' %>
                                     </strong></td>
                                 <td><strong contenteditable="true" data-field="offersWithFranchise.<%= index %>.sum">
-                                        <%= offer.sum %>
+                                        <%= offer.sum || '0' %>
                                     </strong></td>
                             </tr>
                             <% }); %>

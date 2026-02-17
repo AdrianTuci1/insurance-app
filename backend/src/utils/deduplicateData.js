@@ -8,21 +8,18 @@ const deduplicateOffers = (offers) => {
 
     const seen = new Set();
     return offers.filter(offer => {
-        // Create a unique key for each offer
+        // Create a unique key for each offer based ONLY on company name
         // Normalize strings to lower case and trim for robust comparison
         const company = (offer.company || offer.insurer || '').trim().toLowerCase();
-        const rate1 = (offer.rate1 || '').toString().trim();
-        const sum = (offer.sum || '').toString().trim();
 
-        // Key composition: company|rate1|sum
-        // If necessary, add more fields to the key
-        const key = `${company}|${rate1}|${sum}`;
+        // Skip empty company names
+        if (!company) return false;
 
-        if (seen.has(key)) {
+        if (seen.has(company)) {
             return false;
         }
 
-        seen.add(key);
+        seen.add(company);
         return true;
     });
 };
