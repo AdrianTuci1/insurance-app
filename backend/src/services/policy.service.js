@@ -48,7 +48,7 @@ class PolicyService {
             jobId,
             userEmail,
             policyType: type || 'casco',
-            status: 'not started',
+            status: 'queued', // Initial status
             createdAt: new Date().toISOString(),
             filesCount: files.length,
             documents: files.map(f => ({
@@ -59,15 +59,33 @@ class PolicyService {
             }))
         };
 
+        // 1. Create Job in DB
         await Job.create(jobData);
-        Logger.info(`[Job ${jobId}] Job created in DB. Starting background processing...`);
+        Logger.info(`[Job ${jobId}] Job created in DB. Status: queued`);
 
-        // Start background processing
-        this.processFilesInBackground(jobId, files, type || 'casco');
+        // 2. Send to SQS
+        try {
+            const sqsService = require('./sqs.service'); // Lazy load to avoid circular dep if any
 
-        return { jobId, status: 'processing', message: 'Processing started.' };
+            // Optimize payload: Only send necessary file data to SQS
+            const minimalFiles = files.map(f => ({
+                key: f.key,
+                originalname: f.originalname
+            }));
+
+            await sqsService.sendMessage({ jobId, policyType: type || 'casco', files: minimalFiles });
+            Logger.info(`[Job ${jobId}] Enqueued to SQS.`);
+        } catch (err) {
+            Logger.error(`[Job ${jobId}] Failed to enqueue to SQS, falling back to direct processing:`, err);
+            // Fallback: Run directly if SQS fails (optional, but good for stability)
+            this.processFilesInBackground(jobId, files, type || 'casco');
+            return { jobId, status: 'processing', message: 'Processing started (fallback).' };
+        }
+
+        return { jobId, status: 'queued', message: 'Job queued for processing.' };
     }
 
+    // This method is now called by the SQS Worker (or fallback)
     async processFilesInBackground(jobId, files, policyType) {
         try {
             Logger.info(`[Job ${jobId}] Starting background processing for ${files.length} files.`);

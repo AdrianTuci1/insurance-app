@@ -8,11 +8,18 @@ const TABLE_NAME = env.DB.JOBS_TABLE;
 
 class Job {
     static async create(job) {
+        // Add GSI attributes
+        const jobWithGSI = {
+            ...job,
+            GSI1PK: "JOB",
+            GSI1SK: job.createdAt || new Date().toISOString()
+        };
+
         await docClient.send(new PutCommand({
             TableName: TABLE_NAME,
-            Item: job
+            Item: jobWithGSI
         }));
-        return job;
+        return jobWithGSI;
     }
 
     static async findById(jobId) {
@@ -33,6 +40,18 @@ class Job {
             ":status": status,
             ":updatedAt": data.updatedAt || new Date().toISOString()
         };
+
+        // Ensure GSI attributes are set if they are missing (for old items) or if createdAt changes (unlikely but safe)
+        // Note: Updating keys is weird in DynamoDB, but these are GSI keys so it's fine to update attributes.
+        // However, GSI1PK is static "JOB". We should ensure it's there.
+        updateExp += ", GSI1PK = :gsi1pk";
+        expAttrValues[":gsi1pk"] = "JOB";
+
+        if (data.createdAt) {
+            updateExp += ", GSI1SK = :gsi1sk";
+            expAttrValues[":gsi1sk"] = data.createdAt;
+        }
+
 
         // Add other fields from data, but skip updatedAt as we already handled it
         const entries = Object.entries(data).filter(([key]) => key !== 'updatedAt');
@@ -75,32 +94,72 @@ class Job {
     }
 
     static async findAll(filters = {}, limit = 20, lastEvaluatedKey = null) {
-        // Use Scan for now as Filters are complex and GSI might be overkill for MVP filtering on multiple fields
-        // Ideally, use Query on GSI (e.g., UserEmailIndex) + FilterExpression for other fields.
+        const { status, startDate, endDate, userEmail } = filters;
 
-        const { filterExpression, expressionAttributeNames, expressionAttributeValues } = dynamoQuery.buildFilterExpression(filters);
+        // If searching/filtering by specific fields other than status/date, we might still need GSI + FilterExpression
+        // But for "All Jobs" sorted by date, we use GSI1.
 
-        const params = {
+        let queryParams = {
             TableName: TABLE_NAME,
-            Limit: limit,
+            IndexName: "GSI1",
+            KeyConditionExpression: "GSI1PK = :pk",
+            ExpressionAttributeValues: {
+                ":pk": "JOB"
+            },
+            ScanIndexForward: false, // Descending order (newest first)
+            ScanIndexForward: false, // Descending order (newest first)
+            Limit: limit
         };
-
-        if (filterExpression) {
-            params.FilterExpression = filterExpression;
-            params.ExpressionAttributeNames = expressionAttributeNames;
-            params.ExpressionAttributeValues = expressionAttributeValues;
-        }
 
         if (lastEvaluatedKey) {
-            params.ExclusiveStartKey = lastEvaluatedKey;
+            queryParams.ExclusiveStartKey = lastEvaluatedKey;
         }
 
-        const result = await docClient.send(new ScanCommand(params));
+        const filterExpressions = [];
+        const expressionAttributeNames = {};
 
-        return {
-            items: result.Items,
-            lastEvaluatedKey: result.LastEvaluatedKey
-        };
+        if (status) {
+            filterExpressions.push("#status = :status");
+            expressionAttributeNames["#status"] = "status";
+            queryParams.ExpressionAttributeValues[":status"] = status;
+        }
+
+        if (userEmail) {
+            filterExpressions.push("userEmail = :userEmail");
+            queryParams.ExpressionAttributeValues[":userEmail"] = userEmail;
+        }
+
+        if (startDate && endDate) {
+            // range query on GSI1SK (createdAt) if we didn't have to use GSI1PK="JOB".
+            // With "JOB", SK is createdAt. So we can use KeyCondition for date range!
+            // BUT: We already used GSI1PK = JOB. We can ADD range condition.
+            queryParams.KeyConditionExpression += " AND GSI1SK BETWEEN :start AND :end";
+            queryParams.ExpressionAttributeValues[":start"] = startDate;
+            queryParams.ExpressionAttributeValues[":end"] = endDate;
+        }
+
+        if (filterExpressions.length > 0) {
+            queryParams.FilterExpression = filterExpressions.join(" AND ");
+            if (Object.keys(expressionAttributeNames).length > 0) {
+                queryParams.ExpressionAttributeNames = expressionAttributeNames;
+            }
+        }
+
+        // queryParams construction from previous block
+
+        console.log("[Job.findAll] Query Params:", JSON.stringify(queryParams, null, 2));
+
+        try {
+            const result = await docClient.send(new QueryCommand(queryParams));
+            console.log(`[Job.findAll] Success. Found ${result.Items?.length || 0} items.`);
+            return {
+                items: result.Items || [],
+                lastEvaluatedKey: result.LastEvaluatedKey
+            };
+        } catch (error) {
+            console.error("[Job.findAll] Error executing Query:", error);
+            throw error;
+        }
     }
     static async delete(jobId) {
         await docClient.send(new DeleteCommand({

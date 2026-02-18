@@ -24,4 +24,8 @@ const expressApp = appInstance.getExpressApp();
 const PORT = env.PORT || 3000;
 const server = new Server(expressApp, PORT);
 
+// Start SQS Consumer
+const sqsConsumer = require('./src/workers/sqs.consumer');
+sqsConsumer.start();
+
 server.start();

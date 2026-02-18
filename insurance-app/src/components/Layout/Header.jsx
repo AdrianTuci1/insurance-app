@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'; // Added useEffect
+import { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { authStore, clientStore, uiStore } from '../../stores/RootStore';
 import { LogOut, Settings as SettingsIcon, Plus, Search, ChevronLeft, User as UserIcon } from 'lucide-react';
@@ -16,7 +16,7 @@ const Header = observer(() => {
 
     // Access stores directly
     const { user, logout } = authStore;
-    const { searchTerm, setSearchTerm, getClient } = clientStore;
+    // Don't destructure MobX observables/actions from clientStore to preserve 'this' context
 
     // Determine current view
     const isDashboard = location.pathname === '/';
@@ -67,8 +67,8 @@ const Header = observer(() => {
                                             type="text"
                                             placeholder="Search clients, policies..."
                                             className="nav-search-input-top"
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            value={clientStore.searchTerm}
+                                            onChange={(e) => clientStore.setSearchTerm(e.target.value)}
                                         />
                                     </div>
                                 </div>

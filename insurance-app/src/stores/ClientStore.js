@@ -18,9 +18,12 @@ class ClientStore {
     async fetchClients(search = this.searchTerm) {
         this.loading = true;
         try {
-            const data = await dataFacade.getClients(search);
+            const response = await dataFacade.getClients(search);
             runInAction(() => {
-                this.clients = data.map(item => ClientBuilder.fromApiResponse(item).build());
+                // API now returns { items: [...], lastEvaluatedKey: ... }
+                // But dataFacade might already normalize it? Let's assume raw API for now.
+                const items = Array.isArray(response) ? response : (response.items || []);
+                this.clients = items.map(item => ClientBuilder.fromApiResponse(item).build());
                 this.loading = false;
             });
         } catch (error) {

@@ -7,6 +7,7 @@ module.exports = {
     AWS: {
         REGION: process.env.AWS_REGION || 'us-east-1',
         S3_BUCKET: process.env.AWS_S3_BUCKET,
+        SQS_QUEUE_URL: process.env.AWS_SQS_QUEUE_URL
     },
     DB: {
         USERS_TABLE: 'InsuranceUsers',
