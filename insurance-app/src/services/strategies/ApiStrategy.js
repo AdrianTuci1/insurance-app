@@ -2,8 +2,9 @@ import { apiService } from '../api.service';
 import { IDataStrategy } from './IDataStrategy';
 
 export class ApiStrategy extends IDataStrategy {
-    async getClients() {
-        const data = await apiService.get('/policies');
+    async getClients(search) {
+        const query = search ? `?search=${encodeURIComponent(search)}` : '';
+        const data = await apiService.get(`/policies${query}`);
         return data.map(job => ({
             ...job,
             id: job.jobId,

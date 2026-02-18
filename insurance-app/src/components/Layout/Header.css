@@ -1,11 +1,11 @@
-/* Main Header Container */
 .header {
-    background: white;
     z-index: 1000;
     position: sticky;
-    top: -56px;
-    /* Hide top part (was 64, now 56) when scrolling */
-    border-bottom: 1px solid var(--border-color);
+    top: 0;
+    width: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-app);
 }
 
 /* Header Top - Scrolls away */
@@ -15,7 +15,6 @@
     align-items: center;
     padding: 0.5rem 2rem;
     height: 56px;
-    background: white;
     border-bottom: 1px solid var(--border-color);
 }
 

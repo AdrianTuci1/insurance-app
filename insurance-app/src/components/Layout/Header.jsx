@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'; // Added useEffect
 import { observer } from 'mobx-react-lite';
-import { authStore } from '../../stores/AuthStore';
-import { clientStore } from '../../stores/ClientStore';
+import { authStore, clientStore, uiStore } from '../../stores/RootStore';
 import { LogOut, Settings as SettingsIcon, Plus, Search, ChevronLeft, User as UserIcon } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import SettingsModal from '../Settings/SettingsModal';
@@ -28,7 +27,8 @@ const Header = observer(() => {
 
     useEffect(() => {
         if (isClientDetail) {
-            const id = location.pathname.split('/').pop();
+            const parts = location.pathname.split('/');
+            const id = parts[2]; // Format is /client/:id/...
             // Try to find client in store first, or fetch if needed (store handles fetch)
             // Ideally we just grab from store.clients if loaded
             const foundClient = clientStore.clients.find(c => c.id === id);
@@ -94,8 +94,11 @@ const Header = observer(() => {
                                     {clientHeaderInfo || 'Job Details'}
                                 </h1>
 
-                                {/* Portal for dynamic actions (like PolicyPreview Save/Close) */}
-                                <div id="header-actions-portal" className="header-custom-actions"></div>
+                                <div className="header-custom-actions">
+                                    {uiStore.headerActions && typeof uiStore.headerActions === 'function' ? (
+                                        <uiStore.headerActions />
+                                    ) : uiStore.headerActions}
+                                </div>
                             </div>
                         )}
                     </div>

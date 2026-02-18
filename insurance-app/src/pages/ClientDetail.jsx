@@ -17,7 +17,6 @@ const ClientDetail = observer(() => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-    const [isPolicyPreviewOpen, setIsPolicyPreviewOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -259,16 +258,7 @@ const ClientDetail = observer(() => {
     // Simplified processing indicator instead of full page overlay
     const isProcessing = formData.status === 'In Progress' || formData.status === 'not started' || formData.status === 'initializing' || formData.status === 'processing';
 
-    if (isPolicyPreviewOpen) {
-        return (
-            <div className="client-detail-full-layout animate-fade-in" style={{ display: 'block' }}>
-                <PolicyPreview
-                    clientData={formData}
-                    onClose={() => setIsPolicyPreviewOpen(false)}
-                />
-            </div>
-        );
-    }
+    // Removed inline PolicyPreview rendering as it is now a separate route
 
     return (
         <div className="client-detail-full-layout animate-fade-in">
@@ -293,7 +283,7 @@ const ClientDetail = observer(() => {
                 <PolicySection
                     formData={formData}
                     onManageDocuments={() => setIsUploadModalOpen(true)}
-                    onPreview={() => setIsPolicyPreviewOpen(true)}
+                    onPreview={() => navigate(`/client/${id}/preview`)}
                 />
 
                 {/* Horizontal Separator */}

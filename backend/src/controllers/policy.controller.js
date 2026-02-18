@@ -44,7 +44,8 @@ class PolicyController {
     });
 
     getUserPolicies = asyncHandler(async (req, res) => {
-        const summary = await policyService.getUserPolicies();
+        const { search } = req.query;
+        const summary = await policyService.getUserPolicies(search);
         res.json(summary);
     });
 

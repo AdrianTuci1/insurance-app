@@ -1,6 +1,5 @@
 .client-table-container {
     width: 100%;
-    background: white;
     position: relative;
     /* Ensure no overflow issues that break sticky */
 }
@@ -26,7 +25,6 @@
     padding: 0.75rem 1.5rem;
     font-weight: 600;
     color: var(--text-secondary);
-    background: #ffffff;
     /* Solid white to cover rows behind */
     border-bottom: 1px solid var(--border-color);
     font-size: 0.75rem;
@@ -68,16 +66,14 @@
 .table-row {
     transition: all 0.15s ease;
     cursor: pointer;
-    background: white;
 }
 
 .table-row:hover {
-    background: #f8fafc;
+    background: var(--bg-hover);
 }
 
 .table-row td {
     padding: 0.85rem 1.5rem;
-    border-bottom: 1px solid var(--border-soft);
     vertical-align: middle;
 }
 

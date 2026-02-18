@@ -4,7 +4,6 @@
     align-items: center;
     padding: 0 2rem;
     border-bottom: 1px solid var(--border-color);
-    background: white;
     /* More opaque for sticky layers */
     position: relative;
     /* Part of the sticky .header */

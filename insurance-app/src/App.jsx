@@ -6,6 +6,7 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import ClientDetail from './pages/ClientDetail';
 import Layout from './components/Layout/Layout';
+import PolicyPreview from './components/Clients/PolicyPreview';
 
 // Protected Route Component
 const ProtectedRoute = observer(({ children }) => {
@@ -36,6 +37,7 @@ function App() {
         }>
           <Route index element={<Dashboard />} />
           <Route path="client/:id" element={<ClientDetail />} />
+          <Route path="client/:id/preview" element={<PolicyPreview />} />
         </Route>
       </Routes>
     </Router>

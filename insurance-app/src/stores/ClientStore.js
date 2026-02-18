@@ -13,10 +13,12 @@ class ClientStore {
         makeAutoObservable(this);
     }
 
-    async fetchClients() {
+    searchTimeout = null;
+
+    async fetchClients(search = this.searchTerm) {
         this.loading = true;
         try {
-            const data = await dataFacade.getClients();
+            const data = await dataFacade.getClients(search);
             runInAction(() => {
                 this.clients = data.map(item => ClientBuilder.fromApiResponse(item).build());
                 this.loading = false;
@@ -100,6 +102,15 @@ class ClientStore {
 
     setSearchTerm(term) {
         this.searchTerm = term;
+
+        // Debounce search
+        if (this.searchTimeout) {
+            clearTimeout(this.searchTimeout);
+        }
+
+        this.searchTimeout = setTimeout(() => {
+            this.fetchClients(term);
+        }, 500);
     }
 
     setActiveFilter(filter) {

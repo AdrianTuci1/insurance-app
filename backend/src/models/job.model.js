@@ -24,14 +24,25 @@ class Job {
     }
 
     static async updateStatus(jobId, status, data = {}) {
-        let updateExp = "set #status = :status, updatedAt = :updatedAt";
-        let expAttrNames = { "#status": "status" };
-        let expAttrValues = { ":status": status, ":updatedAt": new Date().toISOString() };
+        let updateExp = "set #status = :status, #updatedAt = :updatedAt";
+        let expAttrNames = {
+            "#status": "status",
+            "#updatedAt": "updatedAt"
+        };
+        let expAttrValues = {
+            ":status": status,
+            ":updatedAt": data.updatedAt || new Date().toISOString()
+        };
 
-        for (const [key, value] of Object.entries(data)) {
-            updateExp += `, #${key} = :${key}`;
-            expAttrNames[`#${key}`] = key;
-            expAttrValues[`:${key}`] = value;
+        // Add other fields from data, but skip updatedAt as we already handled it
+        const entries = Object.entries(data).filter(([key]) => key !== 'updatedAt');
+
+        for (const [key, value] of entries) {
+            const attrName = `#${key}`;
+            const valName = `:${key}`;
+            updateExp += `, ${attrName} = ${valName}`;
+            expAttrNames[attrName] = key;
+            expAttrValues[valName] = value;
         }
 
         console.log(`[JobModel] Updating status for ${jobId} to ${status}`);

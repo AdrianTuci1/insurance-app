@@ -270,8 +270,12 @@ class PolicyService {
         };
     }
 
-    async getUserPolicies() {
-        const jobs = await Job.findAll({});
+    async getUserPolicies(search) {
+        const filters = {};
+        if (search) {
+            filters.search = search;
+        }
+        const jobs = await Job.findAll(filters);
         return jobs.items.map(job => ({
             jobId: job.jobId,
             status: job.status === 'complete' ? 'Complete' :

@@ -28,8 +28,8 @@ class DataFacade {
         return this.isDemoMode;
     }
 
-    async getClients() {
-        return await this.currentStrategy.getClients();
+    async getClients(search) {
+        return await this.currentStrategy.getClients(search);
     }
 
     async getClient(id) {
