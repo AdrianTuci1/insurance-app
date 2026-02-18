@@ -1,4 +1,4 @@
-const { TextractClient, StartDocumentAnalysisCommand, GetDocumentAnalysisCommand } = require("@aws-sdk/client-textract");
+const { TextractClient, StartDocumentTextDetectionCommand, GetDocumentTextDetectionCommand } = require("@aws-sdk/client-textract");
 const Logger = require('../utils/logger');
 
 class TextractService {
@@ -8,14 +8,13 @@ class TextractService {
 
     async startTextractJob(s3Key) {
         Logger.info(`Starting Textract job for key: ${s3Key}`);
-        const command = new StartDocumentAnalysisCommand({
+        const command = new StartDocumentTextDetectionCommand({
             DocumentLocation: {
                 S3Object: {
                     Bucket: process.env.AWS_S3_BUCKET,
                     Name: s3Key
                 }
             },
-            FeatureTypes: ["FORMS", "TABLES"]
         });
 
         try {
@@ -35,7 +34,7 @@ class TextractService {
         let nextToken = undefined;
 
         while (!finished) {
-            const command = new GetDocumentAnalysisCommand({ JobId: jobId, NextToken: nextToken });
+            const command = new GetDocumentTextDetectionCommand({ JobId: jobId, NextToken: nextToken });
             try {
                 const response = await this.client.send(command);
                 const status = response.JobStatus;
